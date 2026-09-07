@@ -1701,14 +1701,9 @@ button:hover,.btn:hover{transform:translateY(-2px)}button:active,.btn:active{tra
 @keyframes softPulse{0%,100%{opacity:.72;transform:scale(1)}50%{opacity:1;transform:scale(1.035)}}
 @keyframes floatUp{0%{opacity:0;transform:translateY(18px)}100%{opacity:1;transform:translateY(0)}}
 .game-index{animation:softPulse 3.8s ease-in-out infinite}.game-card{animation:floatUp .65s var(--ease-out) both}
-.sound-hud{position:fixed;right:18px;bottom:18px;z-index:999;display:flex;align-items:center;gap:9px;padding:8px 11px;border:1px solid rgba(202,255,0,.20);background:rgba(8,8,10,.72);backdrop-filter:blur(16px);border-radius:999px;box-shadow:0 10px 35px rgba(0,0,0,.32)}
-.sound-hud button{width:34px;height:34px;border-radius:50%;padding:0;border:1px solid rgba(255,255,255,.13);background:#111116;color:#caff00;font-weight:800;cursor:pointer}.sound-hud span{font-size:10px;letter-spacing:.16em;opacity:.68}
-@media(max-width:700px){.sound-hud{right:10px;bottom:10px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
 </style>
-<div class="sound-hud" aria-label="Звук"><button id="soundToggle" type="button" aria-label="Включить или выключить звук">♪</button><span id="soundLabel">SOUND ON</span></div>
-<script>
-(()=>{let ctx=null,master=null,muted=localStorage.getItem('boom_arcade_sound')==='muted';function ensure(){if(ctx)return;try{ctx=new(window.AudioContext||window.webkitAudioContext)();master=ctx.createGain();master.gain.value=muted?0:.055;master.connect(ctx.destination)}catch(_){}}function tone(f,d=.08,t='sine',v=.12,w=0){ensure();if(!ctx||muted)return;if(ctx.state==='suspended')ctx.resume().catch(()=>{});let n=ctx.currentTime+w,o=ctx.createOscillator(),g=ctx.createGain();o.type=t;o.frequency.setValueAtTime(f,n);g.gain.setValueAtTime(.0001,n);g.gain.exponentialRampToValueAtTime(Math.max(.0001,v),n+.012);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(g);g.connect(master);o.start(n);o.stop(n+d+.025)}function noise(d=.05,v=.025){ensure();if(!ctx||muted)return;let b=ctx.createBuffer(1,Math.floor(ctx.sampleRate*d),ctx.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*(1-i/a.length);let s=ctx.createBufferSource(),g=ctx.createGain();g.gain.value=v;s.buffer=b;s.connect(g);g.connect(master);s.start();s.stop(ctx.currentTime+d)}window.BoomSound={click(){tone(520,.045,'sine',.12)},hover(){tone(760,.035,'sine',.045)},win(){tone(523,.1,'sine',.16);tone(659,.12,'sine',.13,.07);tone(784,.18,'sine',.12,.14)},lose(){tone(220,.12,'triangle',.1);tone(165,.18,'triangle',.075,.08)},tick(){tone(900,.025,'square',.035)},roll(){tone(180,.12,'sine',.07);noise()},big(){tone(392,.11,'sine',.14);tone(523,.13,'sine',.14,.08);tone(784,.24,'sine',.13,.17)}};function hud(){let b=document.getElementById('soundToggle'),l=document.getElementById('soundLabel');if(b)b.textContent=muted?'×':'♪';if(l)l.textContent=muted?'SOUND OFF':'SOUND ON'}document.addEventListener('pointerdown',ensure,{once:true,passive:true});document.addEventListener('click',e=>{if(e.target.closest('#soundToggle')){ensure();muted=!muted;localStorage.setItem('boom_arcade_sound',muted?'muted':'on');if(master)master.gain.setTargetAtTime(muted?0:.055,ctx.currentTime,.025);hud();if(!muted)tone(660,.08,'sine',.1);return}if(e.target.closest('button,.btn,.game-card,.nav-item'))BoomSound.click()},{passive:true});document.addEventListener('mouseover',e=>{if(e.target.closest('.game-card,.nav-item'))BoomSound.hover()},{passive:true});hud()})();
-</script>
+
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -2808,10 +2803,17 @@ function resizeCrashCanvas(){
 }
 window.addEventListener("resize",resizeCrashCanvas);
 
-function crashMultiplierAt(ms){return Math.exp(ms*.00016);}
+function crashMultiplierAt(ms){
+    // Плавный рост множителя: 1.00x -> 1.10x -> 1.50x -> 2.00x и дальше.
+    // Отдельно ограничиваем значение, чтобы UI не ловил NaN/Infinity.
+    const value=Math.exp(Math.max(0,ms)*0.00012);
+    return Number.isFinite(value)?Math.max(1,value):1;
+}
 
 function generateCrashPoint(){
-    return Math.max(1.01,Math.min(670,.97/(1-random())));
+    // Не допускаем мгновенного CRASH: игрок должен видеть рост множителя и успеть нажать «ЗАБРАТЬ».
+    // Большие значения остаются редкими, как и в классической механике Crash.
+    return Math.max(1.20,Math.min(670,.97/(1-random())));
 }
 
 function startCrash(){
@@ -2824,6 +2826,12 @@ function startCrash(){
 
     crash={active:true,cashed:false,bet,multiplier:1,crashPoint:generateCrashPoint(),startTime:performance.now(),raf:null,points:[],cashoutMultiplier:0};
 
+    // Сразу показываем запущенный раунд — ставка списана, но раунд действительно идёт.
+    $("#crashMultiplier").textContent="1.00x";
+    $("#crashStatus").textContent="Курс растёт...";
+    updateCrashUI();
+    drawCrash();
+
     $("#crashStartBtn").disabled=true;
     $("#cashoutBtn").disabled=false;
     $("#crashStatus").textContent="Курс растёт...";
@@ -2835,9 +2843,10 @@ function startCrash(){
 
 function crashLoop(now=performance.now()){
     if(!crash.active)return;
-    const elapsed=now-crash.startTime;
+    const elapsed=Math.max(0,now-crash.startTime);
     crash.multiplier=crashMultiplierAt(elapsed);
 
+    // Даже если CRASH очень низкий, даём хотя бы один кадр роста и корректно завершаем раунд.
     if(crash.multiplier>=crash.crashPoint){
         crash.multiplier=crash.crashPoint;
         crash.points.push({time:elapsed,multiplier:crash.multiplier});
@@ -2985,6 +2994,7 @@ function drawCrash(){
 
 function cashoutCrash(){
     if(!crash.active||crash.cashed)return;
+    // Забрать можно только пока раунд ещё жив.
     crash.cashed=true;
     crash.cashoutMultiplier=crash.multiplier;
 
@@ -4002,13 +4012,20 @@ function bindTilt(){
             card.onmouseleave=null;
             return;
         }
+        let tiltFrame=0,px=0,py=0;
         card.addEventListener("mousemove",e=>{
-            const r=card.getBoundingClientRect();
-            const x=(e.clientX-r.left)/r.width-.5;
-            const y=(e.clientY-r.top)/r.height-.5;
-            card.style.transform="translateY(-6px) perspective(900px) rotateX("+(-y*5).toFixed(2)+"deg) rotateY("+(x*5).toFixed(2)+"deg)";
+            px=e.clientX; py=e.clientY;
+            if(tiltFrame)return;
+            tiltFrame=requestAnimationFrame(()=>{
+                tiltFrame=0;
+                const r=card.getBoundingClientRect();
+                const x=(px-r.left)/r.width-.5;
+                const y=(py-r.top)/r.height-.5;
+                card.style.transform="translateY(-6px) perspective(900px) rotateX("+(-y*5).toFixed(2)+"deg) rotateY("+(x*5).toFixed(2)+"deg)";
+            });
         });
         card.addEventListener("mouseleave",()=>{
+            if(tiltFrame){cancelAnimationFrame(tiltFrame);tiltFrame=0;}
             card.style.transform="";
         });
     });
@@ -4448,6 +4465,9 @@ html, body { overscroll-behavior-x: none; }
   }
 }
 
+.game-card,.stat-card,.profile-card,.quest-card,.achievement-card,.case-card,.live-feed-card,.race-card,.daily-card{contain:layout paint;}
+.game-card::after{will-change:opacity,transform;}
+.game,.section{content-visibility:auto;contain-intrinsic-size:1px 520px;}
 /* ===== LIVE HUB / CASES / VIP ===== */
 .live-hub{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:12px;margin:0 0 54px}
 .hub-main,.daily-card,.live-feed-card,.race-card{min-height:205px;background:linear-gradient(145deg,#111116,#09090b);border:1px solid #29292f;padding:24px;position:relative;overflow:hidden}
@@ -4480,8 +4500,11 @@ html, body { overscroll-behavior-x: none; }
     if(el)setTimeout(()=>el.classList.remove("touch-active"),100);
   },{passive:true});
   seedLiveWins(); renderDailyHub(); renderLiveHub(); renderCases();
-  setInterval(tickLiveHub,1800);
-  setInterval(renderDailyHub,30000);
+  let hubTicks=0;
+  setInterval(()=>{
+    tickLiveHub();
+    if(++hubTicks>=17){hubTicks=0;renderDailyHub();}
+  },1800);
 })();
 
 </body>
