@@ -193,13 +193,6 @@ html[data-theme="dark"] .wheel-fortune{border-color:#161616}
 .fortune-prize{font-family:'Unbounded';margin:25px 0 4px;font-size:54px;font-weight:800;letter-spacing:-2px;color:#FF6B00}
 .fortune-spin{margin-top:20px;width:100%}
 
-/* Рулетка */
-.roulette-layout{display:grid;grid-template-columns:330px 1fr;gap:25px}
-.wheel-wrap{display:grid;place-items:center;position:relative}
-.pointer{position:absolute;top:-14px;z-index:5;font-size:27px;color:#FF6B00}
-.wheel{width:285px;height:285px;border-radius:50%;border:10px solid #111;background:conic-gradient(#141414 0deg 10deg,#F5F5F5 10deg 20deg,#141414 20deg 30deg,#D64545 30deg 40deg,#141414 40deg 50deg,#F5F5F5 50deg 60deg,#D64545 60deg 70deg,#141414 70deg 80deg,#F5F5F5 80deg 90deg,#D64545 90deg 100deg,#141414 100deg 110deg,#F5F5F5 110deg 120deg,#D64545 120deg 130deg,#141414 130deg 140deg,#F5F5F5 140deg 150deg,#D64545 150deg 160deg,#141414 160deg 170deg,#F5F5F5 170deg 180deg,#D64545 180deg 190deg,#141414 190deg 200deg,#F5F5F5 200deg 210deg,#D64545 210deg 220deg,#141414 220deg 230deg,#F5F5F5 230deg 240deg,#D64545 240deg 250deg,#141414 250deg 260deg,#F5F5F5 260deg 270deg,#D64545 270deg 280deg,#141414 280deg 290deg,#F5F5F5 290deg 300deg,#D64545 300deg 310deg,#141414 310deg 320deg,#F5F5F5 320deg 330deg,#D64545 330deg 340deg,#141414 340deg 350deg,#F5F5F5 350deg 360deg);transition:transform 4.5s cubic-bezier(.1,.85,.12,1);box-shadow:0 18px 45px rgba(20,20,20,.2)}
-.wheel::after{content:"✦";position:absolute;inset:60px;background:var(--bg);border:8px solid #111;border-radius:50%;display:grid;place-items:center;font-size:28px;color:#FF6B00}
-
 /* Кости */
 .dice-box{width:150px;height:150px;margin:10px auto 25px;border-radius:25px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:60px;box-shadow:0 18px 35px rgba(20,20,20,.12)}
 .dice-box.rolling{animation:diceRoll .75s ease}
@@ -332,8 +325,6 @@ body{padding-bottom:70px}
 .slots{gap:4px;padding:6px;border-radius:16px}
 .reel-window{height:210px}
 .reel-symbol{height:70px;flex-basis:70px;font-size:34px}
-.roulette-layout{grid-template-columns:1fr}
-.wheel{width:245px;height:245px}
 .grid-2,.grid-3{grid-template-columns:1fr}
 .blackjack-table{padding:14px}
 .card{width:59px;height:83px;font-size:11px}
@@ -490,16 +481,6 @@ html[data-theme="dark"] .mobile-nav{background:rgba(20,20,20,.92)}
                 </div>
             </article>
 
-            <article class="game-card" data-categories="all casino" onclick="openSection('roulette')">
-                <div class="game-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="16" cy="8" r="1.4" fill="#FF6B00" stroke="none"/></svg></div>
-                <div class="game-card-title">Рулетка</div>
-                <div class="game-card-sub">Красное, чёрное и числа.</div>
-                <div class="game-card-meta">
-                    <div class="game-card-limit">×36</div>
-                    <button class="play">ИГРАТЬ</button>
-                </div>
-            </article>
-
             <article class="game-card" data-categories="all popular arcade" onclick="openSection('mines')">
                 <div class="game-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M12 8V5M9 6l1.5 2M15 6l-1.5 2M18 10l2-1M6 10l-2-1"/></svg></div>
                 <div class="game-card-title">Mines</div>
@@ -622,38 +603,6 @@ html[data-theme="dark"] .mobile-nav{background:rgba(20,20,20,.92)}
             <input class="input" id="crashBet" type="number" min="1" value="1000" style="max-width:210px">
             <button class="btn btn-pink" id="crashStartBtn" onclick="startCrash()">СТАРТ</button>
             <button class="btn btn-green" id="cashoutBtn" onclick="cashoutCrash()" disabled>ЗАБРАТЬ</button>
-        </div>
-    </section>
-
-    <!-- РУЛЕТКА -->
-    <section class="game" id="roulette">
-        <div class="game-head">
-            <div>
-                <div class="game-title">🎡 Рулетка</div>
-                <div class="game-sub">Европейская рулетка 0–36.</div>
-            </div>
-            <button class="game-close" onclick="closeGames()">×</button>
-        </div>
-        <div class="roulette-layout">
-            <div class="wheel-wrap">
-                <div class="pointer">▼</div>
-                <div class="wheel" id="rouletteWheel"></div>
-            </div>
-            <div>
-                <div class="grid grid-2">
-                    <button class="btn btn-red" onclick="rouletteBet('red')">🔴 Красное ×2</button>
-                    <button class="btn" onclick="rouletteBet('black')">⚫ Чёрное ×2</button>
-                    <button class="btn btn-light" onclick="rouletteBet('even')">Чётное ×2</button>
-                    <button class="btn btn-light" onclick="rouletteBet('odd')">Нечётное ×2</button>
-                    <button class="btn btn-light" onclick="rouletteBet('low')">1–18 ×2</button>
-                    <button class="btn btn-light" onclick="rouletteBet('high')">19–36 ×2</button>
-                </div>
-                <div class="panel" style="margin-top:14px">
-                    <div class="label">Ставка</div>
-                    <input class="input" id="rouletteBet" type="number" min="1" value="1000">
-                    <div id="rouletteResult" style="margin-top:15px;font-size:25px;font-weight:950">—</div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -1021,6 +970,8 @@ let displayedBalance=state.balance;
 
 function cloneDefault(){return JSON.parse(JSON.stringify(defaultState));}
 
+function cloneNewAccount(){const fresh=cloneDefault();fresh.balance=0;return fresh;}
+
 function loadState(){
     try{
         const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -1088,7 +1039,7 @@ function setAuthMode(mode){
     const register=mode==="register";
     $("#authTitle").textContent=register?"Регистрация":"Вход в аккаунт";
     $("#authSubtitle").textContent=register
-        ?"Создай аккаунт — прогресс будет доступен на других устройствах."
+        ?"Создай аккаунт — новый профиль начнётся с нуля и будет доступен на других устройствах."
         :"Войди, чтобы загрузить свой баланс и прогресс.";
     $("#loginTab").classList.toggle("active",!register);
     $("#registerTab").classList.toggle("active",register);
@@ -1165,11 +1116,13 @@ async function submitAuth(event){
             }
             authUser=cred.user;
             myFirebaseUid=cred.user.uid;
-            await loadCloudState(true);
+            // Каждый новый аккаунт начинается с нулевого баланса
+            // и не получает локальный прогресс предыдущего аккаунта.
+            state=cloneNewAccount();
             if(name){
                 state.username=name;
-                await saveState(true);
             }
+            await saveState(true);
             window.__pendingNewRegistration=false;
             notice("Аккаунт создан","good");
         }else{
@@ -1199,6 +1152,11 @@ async function logout(){
     if(!firebaseReady)return;
     try{
         await firebase.auth().signOut();
+        state=cloneDefault();
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+        displayedBalance=state.balance;
+        renderBalance();
+        renderProfile();
         notice("Ты вышел из аккаунта");
     }catch(e){
         notice(friendlyAuthError(e),"bad");
@@ -1214,9 +1172,9 @@ async function loadCloudState(isNewAccount){
             state=mergeState(cloud);
             localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
         }else if(isNewAccount){
-            // При первой регистрации переносим текущий локальный прогресс
-            // в новый аккаунт, чтобы пользователь ничего не потерял.
-            state=mergeState(state);
+            // Новый аккаунт всегда начинается с чистого профиля и 0 монет.
+            // Локальный прогресс этого устройства не переносится в облако.
+            state=cloneNewAccount();
             localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
             await saveState(true);
         }else{
@@ -2350,49 +2308,6 @@ function spinFortune(){
 }
 
 /* =========================================================
-   РУЛЕТКА
-========================================================= */
-const redNumbers=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
-let rouletteRotation=0;
-
-function rouletteBet(type){
-    const bet=Math.floor(Number($("#rouletteBet").value));
-    if(!spend(bet))return;
-
-    registerGame();
-
-    const number=randInt(0,36);
-    const isRed=redNumbers.includes(number);
-    const color=number===0?"зелёное":isRed?"красное":"чёрное";
-
-    rouletteRotation+=1440+randInt(0,4)*360;
-    $("#rouletteWheel").style.transform="rotate("+rouletteRotation+"deg)";
-
-    setTimeout(()=>{
-        let win=false;
-        if(type==="red")win=color==="красное";
-        if(type==="black")win=color==="чёрное";
-        if(type==="even")win=number!==0&&number%2===0;
-        if(type==="odd")win=number%2===1;
-        if(type==="low")win=number>=1&&number<=18;
-        if(type==="high")win=number>=19&&number<=36;
-
-        $("#rouletteResult").textContent=number+" · "+color;
-
-        track("roulette",{win,amount:win?bet*2:0});
-
-        if(win){
-            const payout=bet*2;
-            addBalance(payout);
-            registerWin(payout);
-            showWin(payout,"РУЛЕТКА +"+money(payout));
-        }else{
-            notice("Не повезло в рулетке","bad");
-        }
-    },4500);
-}
-
-/* =========================================================
    КОСТИ
 ========================================================= */
 const diceFaces=["⚀","⚁","⚂","⚃","⚄","⚅"];
@@ -3019,8 +2934,8 @@ function applySkin(){
 }
 
 /* Статистика по играм */
-const GS_NAMES={slots:"🎰 Слоты",crash:"📈 Crash",blackjack:"🃏 Blackjack",roulette:"🎡 Рулетка",mines:"💣 Mines",dice:"🎲 Dice",reaction:"⚡ Reaction",wheel:"🎡 Колесо"};
-const GS_ORDER=["slots","crash","blackjack","roulette","mines","dice","reaction","wheel"];
+const GS_NAMES={slots:"🎰 Слоты",crash:"📈 Crash",blackjack:"🃏 Blackjack",mines:"💣 Mines",dice:"🎲 Dice",reaction:"⚡ Reaction",wheel:"🎡 Колесо"};
+const GS_ORDER=["slots","crash","blackjack","mines","dice","reaction","wheel"];
 
 function renderGameStats(){
     const el=$("#gsPanel");
