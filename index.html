@@ -1611,7 +1611,7 @@ body:after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;opa
       <div class="auth-error" id="authError"></div>
       <button class="btn btn-pink" id="authSubmit" type="submit">ВОЙТИ</button>
     </form>
-    <div class="auth-help">Используется Firebase Authentication. Пароль хранится у Firebase и не сохраняется в этом HTML.</div>
+    <div class="auth-help">Аккаунт и прогресс синхронизируются через Firebase. Пароль хранится у Firebase и не сохраняется в этом HTML. Если появляется ошибка доступа — проверь правила Realtime Database и Storage в Firebase Console.</div>
   </div>
 </div>
 
@@ -1779,7 +1779,10 @@ function friendlyAuthError(e){
         "auth/invalid-credential":"Неверный email или пароль.",
         "auth/too-many-requests":"Слишком много попыток. Попробуй позже.",
         "auth/network-request-failed":"Ошибка сети. Проверь интернет и повтори.",
-        "auth/operation-not-allowed":"В Firebase не включён вход по Email/Password."
+        "auth/operation-not-allowed":"В Firebase не включён вход по Email/Password.",
+        "storage/unauthorized":"Firebase Storage запрещает загрузку аватарки.",
+        "storage/canceled":"Загрузка аватарки отменена.",
+        "storage/unknown":"Firebase Storage вернул неизвестную ошибку."
     };
     return map[code]||"Не удалось выполнить операцию. "+(e&&e.message?e.message:"");
 }
@@ -1877,7 +1880,10 @@ async function loadCloudState(isNewAccount){
         displayedBalance=state.balance;
     }catch(e){
         console.error("Cloud load error",e);
-        notice("Не удалось загрузить облачный прогресс","bad");
+        const code=e&&e.code||"";
+        if(code==="PERMISSION_DENIED") notice("Не удалось загрузить профиль: Firebase Database запрещает доступ для этого аккаунта.","bad");
+        else if(code==="NETWORK_ERROR") notice("Не удалось загрузить профиль: проверь интернет.","bad");
+        else notice("Не удалось загрузить облачный прогресс: "+(e&&e.message?e.message:"ошибка"),"bad");
     }
 }
 
@@ -1891,6 +1897,8 @@ async function saveState(forceCloud=false){
                 await publishPlayerData(true);
             }catch(e){
                 console.error("Cloud save error",e);
+                if(e&&e.code==="PERMISSION_DENIED") notice("Облако: нет доступа к сохранению. Проверь правила Firebase Database.","bad");
+                else if(e&&e.code==="NETWORK_ERROR") notice("Облако: ошибка сети. Проверь интернет.","bad");
             }
         };
         if(forceCloud)await write();
@@ -1910,6 +1918,7 @@ function refreshAfterCloudChange(){
 }
 
 function startRealtimeCloudSync(){
+    if(cloudStateUnsubscribe){ cloudStateUnsubscribe(); cloudStateUnsubscribe=null; }
     if(!firebaseReady||!authUser||!usersRef)return;
     const ref=usersRef.child(authUser.uid).child("state");
     let first=true;
@@ -1922,7 +1931,11 @@ function startRealtimeCloudSync(){
         }
         first=false;
     };
-    ref.on("value",handler);
+    const errorHandler=e=>{
+        console.error("Realtime cloud sync error",e);
+        if(e&&e.code==="PERMISSION_DENIED") notice("Синхронизация остановлена: Firebase Database запрещает доступ.","bad");
+    };
+    ref.on("value",handler,errorHandler);
     cloudStateUnsubscribe=()=>ref.off("value",handler);
 }
 
@@ -1986,12 +1999,17 @@ function getPlayerId(){return myFirebaseUid||getLocalPlayerId();}
 
 try{
     if(typeof firebase!=="undefined"&&firebaseConfig.apiKey!=="YOUR_API_KEY"){
-        firebase.initializeApp(firebaseConfig);
+        if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db=firebase.database();
         storage=firebase.storage();
         playersRef=db.ref("players");
         usersRef=db.ref("users");
         firebaseReady=true;
+
+        // Явно сохраняем сессию в браузере. Это важно для входа после
+        // перезагрузки и для нормального восстановления аккаунта на устройстве.
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .catch(e=>console.warn("Auth persistence error",e));
 
         firebase.auth().onAuthStateChanged(async user=>{
             if(cloudStateUnsubscribe){ cloudStateUnsubscribe(); cloudStateUnsubscribe=null; }
