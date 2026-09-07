@@ -1110,6 +1110,32 @@ body:after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;opa
 
 
 
+
+<style id="final-polish">
+/* FINAL POLISH: contrast, hierarchy, touch targets, premium cases */
+:root{--lime:#caff00;--ink:#070708;--muted2:#a6a6ad}
+body{color:#f5f5f0!important}
+.section-title,.game-title,.game-card-title,.hero-main h1,.profile-copy h1,.sub-title,.label,.game-sub,.section-sub,.game-head,.panel,.stat,.bonus-card,.ach,.quest,.profile-block,.profile-section-head,.profile-section-label{color:#f5f5f0!important}
+.section-sub,.game-sub,.game-card-sub,.game-card-limit,.hub-note,.to-small,.label,.case-price,.case-range,.vip-sub{color:#a6a6ad!important}
+.input,.input:focus{color:#fff!important;background:#0c0c10!important}.input::placeholder{color:#73737b!important}
+button{color:inherit}.bet-btn{color:#d0d0d5!important}.bet-btn.active{color:#070708!important}.category{color:#c9c9ce!important}.category.active{color:#070708!important}
+.game-close{color:#fff!important}.btn-light{color:#fff!important}.btn-pink{color:#070708!important}.btn-red{color:#fff!important}.btn-green{color:#070708!important}
+.live-hub{margin-bottom:18px}.hub-main,.daily-card,.live-feed-card,.race-card{color:#f5f5f0!important}
+.live-feed-row span{color:#d8d8dd!important}.live-feed-row b{color:var(--lime)!important}
+.streak-day{color:#999!important}.streak-day.done,.streak-day.current{color:#070708!important}
+.cases-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.case-card{min-height:310px;padding:24px;background:linear-gradient(145deg,#15151a,#0a0a0d);border:1px solid #35353d;box-shadow:0 18px 50px rgba(0,0,0,.28);transition:.3s ease}
+.case-card:hover{transform:translateY(-7px);border-color:var(--case);box-shadow:0 24px 70px rgba(0,0,0,.42),0 0 30px color-mix(in srgb,var(--case) 12%,transparent)}
+.case-emoji{font-family:Arial,sans-serif;color:var(--case)!important;text-shadow:0 0 24px color-mix(in srgb,var(--case) 28%,transparent);font-size:58px}
+.case-name{color:#fff!important;font-size:34px}.case-rarity{font-weight:700}.case-price{font-weight:700;color:#d0d0d6!important}.case-range{font-size:10px;color:#85858e!important;margin-top:6px}
+.case-card .btn{margin-top:18px;min-height:48px;font-size:12px}
+.case-open-panel{background:linear-gradient(145deg,#0d0d11,#15111b);border:1px solid #3a3a43;color:#fff!important}.case-result{color:#fff!important}.case-roulette{color:var(--lime)!important}
+.vip-strip{display:grid;grid-template-columns:1.15fr 1fr 1.1fr;gap:22px;align-items:center;margin:0 0 48px;background:linear-gradient(110deg,#101013,#16111c);border:1px solid #2b2b33;padding:24px;position:relative;overflow:hidden}.vip-title{font:42px 'Anton',sans-serif;color:#fff!important}.vip-title span{color:var(--lime)!important}.vip-sub{font:10px 'DM Mono',monospace;margin-top:7px}.vip-meter{height:10px;background:#25252b;overflow:hidden}.vip-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--lime),#8eff00);transition:width .6s cubic-bezier(.2,.8,.2,1)}.vip-perks{display:flex;gap:8px;flex-wrap:wrap}.vip-perks span{font:9px 'DM Mono';color:#c7c7cc!important;border:1px solid #33333a;padding:8px 10px}
+.notice{color:#fff!important}.notice.good{color:#070708!important}
+@media(max-width:900px){.cases-grid{grid-template-columns:1fr 1fr}.vip-strip{grid-template-columns:1fr 1fr}.vip-perks{grid-column:1/-1}}
+@media(max-width:620px){.cases-grid{grid-template-columns:1fr}.vip-strip{grid-template-columns:1fr;margin-bottom:30px}.vip-title{font-size:34px}.vip-meter{margin:4px 0}.vip-perks{grid-column:auto}.case-card{min-height:285px}.case-card .btn{font-size:11px}}
+</style>
+
 </head>
 <body>
 <div class="brand-line"></div>
@@ -1152,6 +1178,38 @@ body:after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;opa
                 <span>Только виртуальные монеты</span>
             </div>
         </div>
+    </section>
+
+    <!-- LIVE HUB -->
+    <section class="live-hub" id="liveHub">
+      <div class="hub-main">
+        <div class="hub-kicker">LIVE / 03</div>
+        <div class="jackpot-label">MEGA JACKPOT</div>
+        <div class="jackpot-value" id="jackpotValue">7 482 391</div>
+        <div class="jackpot-foot"><span><i class="live-dot"></i> LIVE POOL</span><b id="jackpotTimer">+ 0</b></div>
+      </div>
+      <div class="daily-card">
+        <div class="hub-kicker">DAILY REWARD</div>
+        <div class="daily-top"><div><b id="dailyDayLabel">DAY 1 / 7</b><span id="dailyRewardLabel">10 000 COINS</span></div><button class="btn btn-pink" id="hubDailyBtn" onclick="claimDaily()">ЗАБРАТЬ</button></div>
+        <div class="streak-track" id="streakTrack"></div>
+        <div class="hub-note" id="dailyHint">7 дней. Чем дольше серия — тем выше награда.</div>
+      </div>
+      <div class="live-feed-card">
+        <div class="hub-kicker">LIVE WINS</div>
+        <div id="liveFeed"></div>
+      </div>
+      <div class="race-card">
+        <div class="hub-kicker">DAILY RACE</div><div class="race-title">СОБЕРИ БОЛЬШЕ ВСЕХ</div>
+        <div class="race-score"><b id="raceScore">0</b><span> COINS</span></div>
+        <div class="race-bar"><i id="raceBar"></i></div>
+        <div class="hub-note">Твой дневной прогресс. Лидерборд обновляется вместе с играми.</div>
+      </div>
+    </section>
+
+    <section class="vip-strip" id="vipStrip">
+      <div><div class="hub-kicker">VIP / LEVEL</div><div class="vip-title">ТВОЙ VIP <span id="vipLevelLabel">0</span></div><div class="vip-sub" id="vipProgressLabel">0 кейсов · следующий уровень через 10 открытий</div></div>
+      <div class="vip-meter"><i id="vipProgressBar"></i></div>
+      <div class="vip-perks"><span>БОНУСЫ</span><span>БОЛЬШИЕ ЛИМИТЫ</span><span>ЭКСКЛЮЗИВНЫЕ ТЕМЫ</span></div>
     </section>
 
     <!-- ВЫБОР ИГРЫ -->
@@ -1243,6 +1301,12 @@ body:after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;opa
                     <div class="game-card-limit">speed</div>
                     <button class="play">ИГРАТЬ</button>
                 </div>
+            </article>
+
+            <article class="game-card featured" data-categories="all popular bonus" onclick="openSection('cases')">
+                <div class="game-icon">🎁</div><div class="game-card-title">КЕЙСЫ</div>
+                <div class="game-card-sub">Открывай кейсы и собирай монеты, рамки и редкие эффекты.</div>
+                <div class="game-card-meta"><div class="game-card-limit">4 RARITIES</div><button class="play">ОТКРЫТЬ</button></div>
             </article>
 
             <article class="game-card" data-categories="all popular" onclick="openSection('leaders')">
@@ -1422,6 +1486,13 @@ body:after{content:"";position:fixed;inset:0;z-index:999;pointer-events:none;opa
                 <button class="btn btn-pink fortune-spin" id="fortuneSpinBtn" onclick="spinFortune()">КРУТИТЬ КОЛЕСО </button>
             </div>
         </div>
+    </section>
+
+    <!-- КЕЙСЫ -->
+    <section class="game" id="cases">
+      <div class="game-head"><div><div class="game-title">CASES</div><div class="game-sub">Виртуальные кейсы. Никаких реальных платежей — только внутриигровые монеты. Высокий риск: можно потерять всю стоимость открытия.</div></div><button class="game-close" onclick="closeGames()">×</button></div>
+      <div class="cases-grid" id="casesGrid"></div>
+      <div class="case-open-panel hidden" id="caseOpenPanel"><div class="case-roulette" id="caseRoulette">?</div><div class="case-result" id="caseResult">ГОТОВО</div></div>
     </section>
 
     <!-- БОНУСЫ -->
@@ -1655,6 +1726,12 @@ const defaultState={
     sound:true,
     theme:"light",
     dailyDate:null,
+    dailyStreak:0,
+    dailyLastClaim:null,
+    caseStats:{opened:0},
+    vip:0,
+    liveWins:[],
+    dailyRace:{date:null,score:0},
     sixHourClaimAt:0,
     streakDate:null,
     promoUsed:{},
@@ -1724,6 +1801,12 @@ function mergeState(saved){
     const merged={...cloneDefault(),...saved};
     merged.stats={...defaultState.stats,...(saved.stats||{})};
     merged.promoUsed=saved.promoUsed||{};
+    merged.dailyStreak=Number(saved.dailyStreak||0);
+    merged.dailyLastClaim=saved.dailyLastClaim||saved.dailyDate||null;
+    merged.caseStats={opened:0,...(saved.caseStats||{})};
+    merged.vip=Number(saved.vip||0);
+    merged.liveWins=Array.isArray(saved.liveWins)?saved.liveWins:[];
+    merged.dailyRace={date:null,score:0,...(saved.dailyRace||{})};
     merged.history=saved.history||[];
     merged.gameStats=saved.gameStats||{};
     merged.ach=saved.ach||{};
@@ -2212,6 +2295,7 @@ function registerWin(amount){
     state.history=state.history.slice(0,10);
     saveState();
     renderProfile();
+    addLiveWin(state.username||'PLAYER',amount);
 }
 
 /* =========================================================
@@ -2273,7 +2357,8 @@ function openSection(id){
         game.scrollIntoView({behavior:"smooth",block:"start"});
         if(id==="crash")setTimeout(resizeCrashCanvas,150);
     },30);
-    if(id==="bonuses"){renderBonuses();renderQuests();}
+    if(id==="bonuses"){renderBonuses();renderQuests();renderDailyHub();}
+    if(id==="cases")renderCases();
     if(id==="profile")renderProfile();
     if(id==="leaders")renderLeaders();
     if(id==="tournament")renderTournament();
@@ -3293,7 +3378,7 @@ function hitReaction(){
 /* =========================================================
    БОНУСЫ
 ========================================================= */
-function claimDaily(){
+function claimDailyLegacy(){
     const today=todayKey();
     if(state.dailyDate===today){
         notice("Бонус уже получен");
@@ -3394,6 +3479,106 @@ function pullHatu(){
     showWin(1000000,"+1 000 000 ");
     renderBonuses();
     if(document.getElementById("leaders").classList.contains("active"))renderLeaders();
+}
+
+/* =========================================================
+   LIVE HUB / DAILY STREAK / CASES / VIP
+========================================================= */
+const DAILY_REWARDS=[10000,20000,30000,50000,75000,100000,250000];
+const CASES=[
+  {id:'common',name:'ОБЫЧНЫЙ',price:100000,emoji:'◈',color:'#caff00',drops:[0,25000,75000,200000,500000],weights:[18,24,30,20,8]},
+  {id:'rare',name:'РЕДКИЙ',price:500000,emoji:'◇',color:'#55e9ff',drops:[0,100000,350000,1000000,2500000],weights:[15,25,30,22,8]},
+  {id:'epic',name:'ЭПИЧЕСКИЙ',price:2000000,emoji:'✦',color:'#f05cff',drops:[0,500000,1500000,4000000,10000000],weights:[14,24,30,22,10]},
+  {id:'legend',name:'ЛЕГЕНДАРНЫЙ',price:10000000,emoji:'✧',color:'#ffb84d',drops:[0,2000000,7500000,20000000,50000000],weights:[12,23,30,24,11]}
+];
+let jackpot=7482391;
+function renderDailyHub(){
+  const today=todayKey(), claimed=state.dailyLastClaim===today;
+  if(state.dailyLastClaim && state.dailyLastClaim!==today){
+    const prev=new Date(state.dailyLastClaim), now=new Date(today+'T00:00:00');
+    const diff=Math.round((now-prev)/86400000);
+    if(diff>1)state.dailyStreak=0;
+  }
+  let day=Math.min(7,Math.max(1,(state.dailyStreak||0)+1));
+  if(state.dailyLastClaim && state.dailyLastClaim!==today && (state.dailyStreak||0)>=7) day=1;
+  const el=document.getElementById('dailyDayLabel'); if(el)el.textContent='DAY '+day+' / 7';
+  const rew=document.getElementById('dailyRewardLabel'); if(rew)rew.textContent=money(DAILY_REWARDS[day-1])+' COINS';
+  const btn=document.getElementById('hubDailyBtn'); if(btn){btn.disabled=claimed;btn.textContent=claimed?'ПОЛУЧЕНО':'ЗАБРАТЬ';}
+  const track=document.getElementById('streakTrack'); if(track)track.innerHTML=DAILY_REWARDS.map((x,i)=>'<div class="streak-day '+(i<(state.dailyStreak||0)?'done ':'')+(i===day-1&&!claimed?'current':'')+'>'+ (i+1) +'</div>').join('');
+  const hint=document.getElementById('dailyHint'); if(hint)hint.textContent=claimed?'Завтра откроется следующий день серии.':'Забери награду сегодня, чтобы продолжить серию.';
+}
+function claimDaily(){
+  const today=todayKey();
+  if(state.dailyLastClaim===today){notice('Бонус уже получен');return;}
+  let streak=Number(state.dailyStreak||0);
+  if(state.dailyLastClaim){
+    const diff=Math.round((new Date(today)-new Date(state.dailyLastClaim))/86400000);
+    streak=diff===1?streak:0;
+  }
+  const day=(streak%7)+1, reward=DAILY_REWARDS[day-1];
+  state.dailyStreak=day; state.dailyLastClaim=today; state.dailyDate=today;
+  addBalance(reward); showWin(reward,'DAY '+day+' · +'+money(reward)); saveState(); renderBonuses(); renderDailyHub();
+}
+function seedLiveWins(){
+  if(!Array.isArray(state.liveWins)||!state.liveWins.length)state.liveWins=[
+    ['PLAYER_67',420000],['BOOM',1250000],['MAX',780000],['NOVA',360000]
+  ];
+}
+function renderVip(){
+  const opened=Number(state.caseStats?.opened||0), level=Math.min(5,Math.floor(opened/10)), progress=level>=5?100:(opened%10)*10;
+  const l=document.getElementById('vipLevelLabel'); if(l)l.textContent=level;
+  const p=document.getElementById('vipProgressBar'); if(p)p.style.width=progress+'%';
+  const t=document.getElementById('vipProgressLabel'); if(t)t.textContent=level>=5?'MAX VIP · ДОСТУПЕН МАКСИМАЛЬНЫЙ УРОВЕНЬ':opened+' кейсов · следующий уровень через '+(10-(opened%10))+' открытий';
+}
+function renderLiveHub(){
+  seedLiveWins();
+  const feed=document.getElementById('liveFeed');
+  if(feed)feed.innerHTML=state.liveWins.slice(0,4).map(x=>'<div class="live-feed-row"><span>◉ '+x[0]+'</span><b>+'+money(x[1])+'</b></div>').join('');
+  const score=Number(state.dailyRace?.date===todayKey()?state.dailyRace.score:0);
+  const rs=document.getElementById('raceScore'); if(rs)rs.textContent=money(score);
+  const rb=document.getElementById('raceBar'); if(rb)rb.style.width=Math.min(100,score/10000000*100)+'%';
+  const j=document.getElementById('jackpotValue'); if(j)j.textContent=money(jackpot);
+}
+function tickLiveHub(){
+  jackpot+=randInt(25,180); const j=document.getElementById('jackpotValue'); if(j)j.textContent=money(jackpot);
+}
+function addLiveWin(name,amount){
+  seedLiveWins(); state.liveWins.unshift([name,Math.round(amount)]); state.liveWins=state.liveWins.slice(0,8);
+  const t=todayKey(); if(state.dailyRace.date!==t)state.dailyRace={date:t,score:0}; state.dailyRace.score+=Math.max(0,Math.round(amount));
+  renderLiveHub();
+}
+function weightedDrop(c){
+  const total=(c.weights||[]).reduce((a,b)=>a+b,0), r=Math.random()*total; let acc=0;
+  for(let i=0;i<c.drops.length;i++){acc+=c.weights?.[i]||1;if(r<=acc)return c.drops[i];}
+  return c.drops[c.drops.length-1];
+}
+function renderCases(){
+  const el=document.getElementById('casesGrid'); if(!el)return;
+  el.innerHTML=CASES.map(c=>'<div class="case-card" style="--case:'+c.color+'"><div class="case-rarity">'+c.id.toUpperCase()+'</div><div class="case-emoji">'+c.emoji+'</div><div class="case-name">'+c.name+'</div><div class="case-price">РИСК '+money(c.price)+' COINS</div><div class="case-range">ДО '+money(Math.max(...c.drops))+' · 5 НАГРАД</div><button class="btn btn-pink" onclick="openCase(\''+c.id+'\')">ОТКРЫТЬ ЗА '+money(c.price)+'</button></div>').join('');
+}
+function openCase(id){
+  const c=CASES.find(x=>x.id===id); if(!c)return;
+  if(!spend(c.price))return;
+  const panel=document.getElementById('caseOpenPanel'), roll=document.getElementById('caseRoulette'), result=document.getElementById('caseResult');
+  panel.classList.remove('hidden','case-win'); panel.classList.add('case-spinning'); result.textContent='СТАВКА '+money(c.price)+' · ОТКРЫВАЕМ...';
+  const final=weightedDrop(c);
+  let ticks=0; const timer=setInterval(()=>{
+    roll.textContent=money(weightedDrop(c));
+    if(++ticks>=14){
+      clearInterval(timer); panel.classList.remove('case-spinning'); panel.classList.add('case-win'); roll.textContent=money(final);
+      if(final>0){
+        addBalance(final); registerWin(final);
+        result.textContent='ВЫИГРЫШ · +'+money(final)+' · ЧИСТЫЙ РЕЗУЛЬТАТ '+(final-c.price>=0?'+':'')+money(final-c.price);
+        showWin(final,'CASE · +'+money(final));
+      }else{
+        result.textContent='ПРОИГРЫШ · −'+money(c.price)+' · КЕЙС ПУСТ';
+        notice('Кейс проигран: −'+money(c.price),'bad');
+      }
+      state.caseStats.opened=(state.caseStats.opened||0)+1;
+      state.vip=Math.min(5,Math.floor((state.caseStats.opened||0)/10));
+      saveState(); renderProfile(); renderLiveHub();
+    }
+  },80);
 }
 
 /* =========================================================
@@ -4262,6 +4447,15 @@ html, body { overscroll-behavior-x: none; }
     animation:none !important;
   }
 }
+
+/* ===== LIVE HUB / CASES / VIP ===== */
+.live-hub{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:12px;margin:0 0 54px}
+.hub-main,.daily-card,.live-feed-card,.race-card{min-height:205px;background:linear-gradient(145deg,#111116,#09090b);border:1px solid #29292f;padding:24px;position:relative;overflow:hidden}
+.hub-main{grid-row:span 2;background:radial-gradient(circle at 70% 30%,rgba(202,255,0,.18),transparent 34%),linear-gradient(145deg,#151518,#08080a)}
+.hub-main:after{content:"JACKPOT";position:absolute;right:-18px;bottom:-38px;font:100px 'Anton';color:rgba(202,255,0,.035);transform:rotate(-8deg)}
+.hub-kicker{font:500 9px 'DM Mono',monospace;color:var(--lime);letter-spacing:.16em;text-transform:uppercase}.jackpot-label{margin-top:36px;font:38px 'Anton';letter-spacing:.02em}.jackpot-value{font:clamp(48px,6vw,82px) 'Anton';color:var(--lime);line-height:.95;text-shadow:0 0 30px rgba(202,255,0,.18)}.jackpot-foot{display:flex;justify-content:space-between;margin-top:24px;font:10px 'DM Mono';color:#777}.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime);margin-right:6px}.daily-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:24px}.daily-top b{display:block;font:25px 'Anton'}.daily-top span{display:block;color:#777;font:10px 'DM Mono';margin-top:5px}.daily-top .btn{min-width:115px}.streak-track{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:22px}.streak-day{height:34px;border:1px solid #2b2b31;display:grid;place-items:center;font:9px 'DM Mono';color:#666}.streak-day.done{background:var(--lime);border-color:var(--lime);color:#070708}.streak-day.current{border-color:var(--lime);color:var(--lime);box-shadow:0 0 18px rgba(202,255,0,.12)}.hub-note{color:#777;font-size:10px;line-height:1.5;margin-top:13px}.live-feed-card{grid-column:2}.live-feed-row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #222229;font:10px 'DM Mono';animation:feedIn .45s ease both}.live-feed-row b{color:var(--lime)}@keyframes feedIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}.race-card{grid-column:3}.race-title{font:28px 'Anton';margin-top:28px}.race-score{margin-top:8px}.race-score b{font:32px 'Anton';color:var(--lime)}.race-score span{font:10px 'DM Mono';color:#777}.race-bar{height:7px;background:#222229;margin-top:16px}.race-bar i{display:block;height:100%;width:0;background:var(--lime);transition:width .5s var(--ease)}.cases-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.case-card{background:linear-gradient(145deg,#141419,#0b0b0e);border:1px solid #303038;padding:22px;min-height:250px;position:relative;overflow:hidden}.case-card:before{content:"";position:absolute;width:130px;height:130px;border-radius:50%;right:-40px;top:-40px;background:var(--case);filter:blur(30px);opacity:.2}.case-rarity{font:9px 'DM Mono';color:var(--case);letter-spacing:.15em}.case-emoji{font-size:48px;margin:28px 0 12px}.case-name{font:30px 'Anton'}.case-price{font:11px 'DM Mono';color:#888;margin-top:8px}.case-card .btn{width:100%;margin-top:20px}.case-open-panel{margin-top:16px;border:1px solid #303038;background:#09090b;padding:30px;text-align:center}.case-roulette{font:80px 'Anton';color:var(--lime);min-height:100px;display:grid;place-items:center}.case-result{font:18px 'Anton';margin-top:10px}.case-spinning .case-roulette{animation:caseSpin .55s linear infinite}.case-win .case-roulette{animation:caseWin .55s var(--spring)}@keyframes caseSpin{to{transform:translateY(-8px) rotate(8deg)}}@keyframes caseWin{0%{transform:scale(.7)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+@media(max-width:900px){.live-hub{grid-template-columns:1fr 1fr}.hub-main{grid-row:auto;grid-column:span 2}.live-feed-card,.race-card{grid-column:auto}.cases-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.live-hub{grid-template-columns:1fr}.hub-main,.live-feed-card,.race-card{grid-column:auto}.cases-grid{grid-template-columns:1fr}.jackpot-label{margin-top:24px}.daily-top{align-items:flex-end;flex-direction:column}}
 </style>
 
 <script>
@@ -4285,8 +4479,10 @@ html, body { overscroll-behavior-x: none; }
     const el=e.target.closest("button,.btn,.game-card,.nav-item");
     if(el)setTimeout(()=>el.classList.remove("touch-active"),100);
   },{passive:true});
+  seedLiveWins(); renderDailyHub(); renderLiveHub(); renderCases();
+  setInterval(tickLiveHub,1800);
+  setInterval(renderDailyHub,30000);
 })();
-</script>
 
 </body>
 </html>
