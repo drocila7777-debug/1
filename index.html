@@ -1122,6 +1122,7 @@ async function submitAuth(event){
             if(name){
                 state.username=name;
             }
+            localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
             await saveState(true);
             window.__pendingNewRegistration=false;
             notice("Аккаунт создан","good");
@@ -1129,7 +1130,8 @@ async function submitAuth(event){
             cred=await firebase.auth().signInWithEmailAndPassword(email,password);
             authUser=cred.user;
             myFirebaseUid=cred.user.uid;
-            await loadCloudState(false);
+            // Состояние аккаунта загружается в onAuthStateChanged,
+            // чтобы не было гонки двух одновременных загрузок.
             notice("Вход выполнен","good");
         }
         renderAuthStatus();
