@@ -356,6 +356,33 @@ html[data-theme="dark"] .mobile-nav{background:rgba(20,20,20,.92)}
 .balance{min-width:105px;padding:0 8px}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ===== АККАУНТ / АВТОРИЗАЦИЯ ===== */
+.auth-status{display:flex;align-items:center;gap:8px;max-width:260px}
+.auth-user{font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.auth-dot{width:8px;height:8px;border-radius:50%;background:#1F9D63;box-shadow:0 0 0 4px rgba(31,157,99,.12)}
+.auth-btn{height:43px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--text);padding:0 13px;font-weight:900;box-shadow:0 4px 14px rgba(20,20,20,.05);transition:.25s var(--ease)}
+.auth-btn:hover{transform:translateY(-2px);border-color:rgba(255,107,0,.5)}
+.auth-modal{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(0,0,0,.48);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:.25s var(--ease)}
+.auth-modal.show{opacity:1;pointer-events:auto}
+.auth-box{width:min(430px,100%);background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:var(--shadow2);transform:translateY(12px) scale(.98);transition:.3s var(--spring)}
+.auth-modal.show .auth-box{transform:none}
+.auth-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:18px}
+.auth-title{font-family:'Unbounded';font-size:22px;font-weight:800;letter-spacing:-1px}
+.auth-close{width:38px;height:38px;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:11px;font-size:20px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:4px;background:var(--soft);border-radius:13px;margin-bottom:18px}
+.auth-tab{border:0;background:transparent;color:var(--muted);padding:10px;border-radius:10px;font-weight:900}
+.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:0 3px 10px rgba(20,20,20,.08)}
+.auth-form{display:grid;gap:10px}
+.auth-form .input{width:100%}
+.auth-error{min-height:18px;color:#D64545;font-size:12px;font-weight:800;line-height:1.4}
+.auth-help{color:var(--muted);font-size:11px;line-height:1.5;margin-top:10px}
+.auth-loading{opacity:.65;pointer-events:none}
+@media(max-width:700px){
+  .auth-user{display:none}
+  .auth-btn{height:39px;padding:0 10px;font-size:11px}
+}
+
 </style>
 <base target="_blank">
 </head>
@@ -370,6 +397,9 @@ html[data-theme="dark"] .mobile-nav{background:rgba(20,20,20,.92)}
         </a>
         <div class="header-actions">
             <div class="balance" id="balanceBox">🪙 <span id="balance">1 000</span></div>
+            <div class="auth-status" id="authStatus">
+                <button class="auth-btn" id="authOpenBtn" onclick="openAuth()">ВОЙТИ</button>
+            </div>
             <button class="header-btn" id="soundBtn" title="Звук"></button>
             <button class="header-btn" id="themeBtn" title="Тема" onclick="toggleTheme()"></button>
             <button class="header-btn" onclick="openSection('profile')" title="Профиль">
@@ -911,6 +941,41 @@ html[data-theme="dark"] .mobile-nav{background:rgba(20,20,20,.92)}
     </button>
 </nav>
 
+
+<!-- АВТОРИЗАЦИЯ -->
+<div class="auth-modal" id="authModal" aria-hidden="true">
+  <div class="auth-box" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="auth-head">
+      <div>
+        <div class="auth-title" id="authTitle">Вход в аккаунт</div>
+        <div class="game-sub" id="authSubtitle">Данные и баланс будут доступны на других устройствах.</div>
+      </div>
+      <button class="auth-close" onclick="closeAuth()" aria-label="Закрыть">×</button>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Войти</button>
+      <button class="auth-tab" id="registerTab" onclick="setAuthMode('register')">Регистрация</button>
+    </div>
+    <form class="auth-form" id="authForm" onsubmit="submitAuth(event)">
+      <div>
+        <label class="label" for="authEmail">Email</label>
+        <input class="input" id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required>
+      </div>
+      <div>
+        <label class="label" for="authPassword">Пароль</label>
+        <input class="input" id="authPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Минимум 6 символов" required>
+      </div>
+      <div id="authNameWrap" class="hidden">
+        <label class="label" for="authName">Имя игрока</label>
+        <input class="input" id="authName" type="text" maxlength="30" autocomplete="nickname" placeholder="Например, BoomPlayer">
+      </div>
+      <div class="auth-error" id="authError"></div>
+      <button class="btn btn-pink" id="authSubmit" type="submit">ВОЙТИ</button>
+    </form>
+    <div class="auth-help">Используется Firebase Authentication. Пароль хранится у Firebase и не сохраняется в этом HTML.</div>
+  </div>
+</div>
+
 <div class="notice" id="notice"></div>
 <div class="win-overlay" id="winOverlay"><div class="win-text" id="winText">+0 🪙</div></div>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -972,12 +1037,10 @@ function loadState(){
     }catch(e){return cloneDefault();}
 }
 
-function saveState(){
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-}
+// saveState() объявлена ниже вместе с облачной синхронизацией.
 
 /* =========================================================
-   FIREBASE: ГЛОБАЛЬНЫЙ ЛИДЕРБОРД
+   FIREBASE: АККАУНТЫ + ОБЛАЧНОЕ СОХРАНЕНИЕ + ЛИДЕРБОРД
 ========================================================= */
 const firebaseConfig={
     apiKey:"AIzaSyCdFH7N1V0ZqE2hXhs1g478r7f3RqrJ6TU",
@@ -989,40 +1052,213 @@ const firebaseConfig={
     appId:"1:325086041204:web:911f243f622c359924ed21"
 };
 
-let db=null,playersRef=null,firebaseReady=false,globalPlayers=[],myFirebaseUid=null;
+let db=null,playersRef=null,usersRef=null,firebaseReady=false,globalPlayers=[],myFirebaseUid=null;
+let authUser=null,authReady=false,cloudSyncTimer=null,authMode="login";
 
-try{
-    if(typeof firebase!=="undefined"&&firebaseConfig.apiKey!=="YOUR_API_KEY"){
-        firebase.initializeApp(firebaseConfig);
-        db=firebase.database();
-        playersRef=db.ref("players");
-        firebaseReady=true;
+function mergeState(saved){
+    if(!saved)return cloneDefault();
+    const merged={...cloneDefault(),...saved};
+    merged.stats={...defaultState.stats,...(saved.stats||{})};
+    merged.promoUsed=saved.promoUsed||{};
+    merged.history=saved.history||[];
+    merged.gameStats=saved.gameStats||{};
+    merged.ach=saved.ach||{};
+    merged.shop={...defaultState.shop,...(saved.shop||{})};
+    merged.sixHourClaimAt=Number(saved.sixHourClaimAt||0);
+    return merged;
+}
 
-        firebase.auth().signInAnonymously().then(cred=>{
-            myFirebaseUid=cred.user.uid;
-            publishPlayerData();
-        }).catch(()=>{
-            myFirebaseUid=getLocalPlayerId();
-        });
+function setAuthError(msg){
+    const el=$("#authError");
+    if(el)el.textContent=msg||"";
+}
 
-        playersRef.on("value",snapshot=>{
-            const data=snapshot.val()||{};
-            const now=Date.now();
-            globalPlayers=Object.entries(data).map(([uid,p])=>({
-                id:uid,
-                name:p.name||"Игрок",
-                balance:p.balance||0,
-                avatar:p.avatar||"🎰",
-                lastSeen:p.lastSeen||0
-            })).filter(p=>(now-p.lastSeen)<300000);
-
-            if(document.getElementById("leaders").classList.contains("active")){
-                renderLeaders();
-            }
-        });
+function setAuthBusy(busy){
+    const box=document.querySelector(".auth-box");
+    const btn=$("#authSubmit");
+    if(box)box.classList.toggle("auth-loading",busy);
+    if(btn){
+        btn.disabled=busy;
+        btn.textContent=busy?"ПОДОЖДИ…":(authMode==="login"?"ВОЙТИ":"СОЗДАТЬ АККАУНТ");
     }
-}catch(e){
-    console.log("Firebase не настроен, локальный режим");
+}
+
+function setAuthMode(mode){
+    authMode=mode;
+    const register=mode==="register";
+    $("#authTitle").textContent=register?"Регистрация":"Вход в аккаунт";
+    $("#authSubtitle").textContent=register
+        ?"Создай аккаунт — прогресс будет доступен на других устройствах."
+        :"Войди, чтобы загрузить свой баланс и прогресс.";
+    $("#loginTab").classList.toggle("active",!register);
+    $("#registerTab").classList.toggle("active",register);
+    $("#authNameWrap").classList.toggle("hidden",!register);
+    $("#authPassword").autocomplete=register?"new-password":"current-password";
+    setAuthError("");
+    const btn=$("#authSubmit");
+    if(btn&&!btn.disabled)btn.textContent=register?"СОЗДАТЬ АККАУНТ":"ВОЙТИ";
+}
+
+function openAuth(mode="login"){
+    if(authUser){notice("Ты уже вошёл в аккаунт","good");return;}
+    $("#authModal").classList.add("show");
+    $("#authModal").setAttribute("aria-hidden","false");
+    setAuthMode(mode);
+    setTimeout(()=>$("#authEmail").focus(),50);
+}
+
+function closeAuth(){
+    $("#authModal").classList.remove("show");
+    $("#authModal").setAttribute("aria-hidden","true");
+    setAuthError("");
+}
+
+function renderAuthStatus(){
+    const el=$("#authStatus");
+    if(!el)return;
+    if(authUser){
+        const name=authUser.displayName||authUser.email||"Аккаунт";
+        el.innerHTML='<span class="auth-dot"></span><span class="auth-user" title="'+String(authUser.email||"")+'">'+String(name)+'</span>'
+            +'<button class="auth-btn" onclick="logout()">ВЫЙТИ</button>';
+    }else{
+        el.innerHTML='<button class="auth-btn" onclick="openAuth()">ВОЙТИ</button>';
+    }
+}
+
+function friendlyAuthError(e){
+    const code=e&&e.code||"";
+    const map={
+        "auth/email-already-in-use":"Этот email уже зарегистрирован. Войди в аккаунт.",
+        "auth/invalid-email":"Проверь адрес email.",
+        "auth/weak-password":"Пароль должен содержать минимум 6 символов.",
+        "auth/user-not-found":"Аккаунт с таким email не найден.",
+        "auth/wrong-password":"Неверный email или пароль.",
+        "auth/invalid-credential":"Неверный email или пароль.",
+        "auth/too-many-requests":"Слишком много попыток. Попробуй позже.",
+        "auth/network-request-failed":"Ошибка сети. Проверь интернет и повтори.",
+        "auth/operation-not-allowed":"В Firebase не включён вход по Email/Password."
+    };
+    return map[code]||"Не удалось выполнить операцию. "+(e&&e.message?e.message:"");
+}
+
+async function submitAuth(event){
+    event.preventDefault();
+    if(!firebaseReady||typeof firebase==="undefined"){
+        setAuthError("Firebase недоступен. Проверь подключение.");
+        return;
+    }
+    const email=$("#authEmail").value.trim().toLowerCase();
+    const password=$("#authPassword").value;
+    const name=$("#authName").value.trim();
+    if(!email||!password)return;
+    setAuthBusy(true);
+    setAuthError("");
+    try{
+        let cred;
+        if(authMode==="register"){
+            // Флаг нужен, потому что Firebase вызывает onAuthStateChanged
+            // сразу после создания нового пользователя.
+            window.__pendingNewRegistration=true;
+            cred=await firebase.auth().createUserWithEmailAndPassword(email,password);
+            if(name){
+                await cred.user.updateProfile({displayName:name});
+            }
+            authUser=cred.user;
+            myFirebaseUid=cred.user.uid;
+            await loadCloudState(true);
+            if(name){
+                state.username=name;
+                await saveState(true);
+            }
+            window.__pendingNewRegistration=false;
+            notice("Аккаунт создан","good");
+        }else{
+            cred=await firebase.auth().signInWithEmailAndPassword(email,password);
+            authUser=cred.user;
+            myFirebaseUid=cred.user.uid;
+            await loadCloudState(false);
+            notice("Вход выполнен","good");
+        }
+        renderAuthStatus();
+        closeAuth();
+        renderBalance();
+        renderProfile();
+        renderBonuses();
+        renderQuests();
+        renderCrashHistory();
+        renderTournament();
+        applySkin();
+    }catch(e){
+        setAuthError(friendlyAuthError(e));
+    }finally{
+        setAuthBusy(false);
+    }
+}
+
+async function logout(){
+    if(!firebaseReady)return;
+    try{
+        await firebase.auth().signOut();
+        notice("Ты вышел из аккаунта");
+    }catch(e){
+        notice(friendlyAuthError(e),"bad");
+    }
+}
+
+async function loadCloudState(isNewAccount){
+    if(!firebaseReady||!authUser||!usersRef)return;
+    try{
+        const snap=await usersRef.child(authUser.uid).child("state").once("value");
+        const cloud=snap.val();
+        if(cloud){
+            state=mergeState(cloud);
+            localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+        }else if(isNewAccount){
+            // При первой регистрации переносим текущий локальный прогресс
+            // в новый аккаунт, чтобы пользователь ничего не потерял.
+            state=mergeState(state);
+            localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+            await saveState(true);
+        }else{
+            state=cloneDefault();
+            localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+            notice("Облачный прогресс не найден — создан новый профиль");
+        }
+        displayedBalance=state.balance;
+    }catch(e){
+        console.error("Cloud load error",e);
+        notice("Не удалось загрузить облачный прогресс","bad");
+    }
+}
+
+async function saveState(forceCloud=false){
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    if(firebaseReady&&authUser&&usersRef){
+        clearTimeout(cloudSyncTimer);
+        const write=async()=>{
+            try{
+                await usersRef.child(authUser.uid).child("state").set(state);
+                await publishPlayerData(true);
+            }catch(e){
+                console.error("Cloud save error",e);
+            }
+        };
+        if(forceCloud)await write();
+        else cloudSyncTimer=setTimeout(write,120);
+    }
+}
+
+async function publishPlayerData(force=false){
+    if(!firebaseReady||!playersRef)return;
+    const uid=myFirebaseUid||getLocalPlayerId();
+    const payload={
+        name:state.username||"Игрок",
+        balance:state.balance||0,
+        avatar:state.customAvatar||state.avatar||"🎰",
+        lastSeen:Date.now()
+    };
+    try{await playersRef.child(uid).update(payload);}
+    catch(e){if(force)console.error("Leaderboard save error",e);}
 }
 
 function getLocalPlayerId(){
@@ -1036,18 +1272,64 @@ function getLocalPlayerId(){
 
 function getPlayerId(){return myFirebaseUid||getLocalPlayerId();}
 
-function publishPlayerData(){
-    if(!firebaseReady||!playersRef)return;
-    const uid=myFirebaseUid||getLocalPlayerId();
-    playersRef.child(uid).set({
-        name:state.username||"Игрок",
-        balance:state.balance||0,
-        avatar:state.customAvatar||state.avatar||"🎰",
-        lastSeen:Date.now()
-    });
+try{
+    if(typeof firebase!=="undefined"&&firebaseConfig.apiKey!=="YOUR_API_KEY"){
+        firebase.initializeApp(firebaseConfig);
+        db=firebase.database();
+        playersRef=db.ref("players");
+        usersRef=db.ref("users");
+        firebaseReady=true;
+
+        firebase.auth().onAuthStateChanged(async user=>{
+            authUser=user||null;
+            myFirebaseUid=user?user.uid:null;
+            authReady=true;
+            renderAuthStatus();
+
+            if(user){
+                const isNewRegistration=!!window.__pendingNewRegistration;
+                await loadCloudState(isNewRegistration);
+                window.__pendingNewRegistration=false;
+                renderBalance();
+                renderProfile();
+                renderBonuses();
+                renderQuests();
+                renderCrashHistory();
+                renderTournament();
+                applySkin();
+                publishPlayerData(true);
+            }else{
+                state=loadState();
+                displayedBalance=state.balance;
+                renderBalance();
+                renderProfile();
+            }
+        });
+
+        playersRef.on("value",snapshot=>{
+            const data=snapshot.val()||{};
+            const now=Date.now();
+            globalPlayers=Object.entries(data).map(([uid,p])=>({
+                id:uid,
+                name:p.name||"Игрок",
+                balance:p.balance||0,
+                avatar:p.avatar||"🎰",
+                lastSeen:p.lastSeen||0
+            })).filter(p=>(now-p.lastSeen)<300000);
+
+            if(document.getElementById("leaders")?.classList.contains("active")){
+                renderLeaders();
+            }
+        });
+    }
+}catch(e){
+    console.log("Firebase не настроен, локальный режим",e);
 }
 
-function broadcastMyUpdate(){publishPlayerData();}
+function broadcastMyUpdate(){
+    publishPlayerData(false);
+    if(authUser)saveState(false);
+}
 
 /* =========================================================
    УТИЛИТЫ
@@ -2418,6 +2700,22 @@ function saveUsername(){
 
 function renderProfile(){
     $("#profileName").textContent=state.username;
+    const authTitle=$("#profileAuthTitle"), authText=$("#profileAuthText"), authBtn=$("#profileAuthBtn");
+    if(authTitle&&authText&&authBtn){
+        if(authUser){
+            authTitle.textContent="Аккаунт подключён ✓";
+            authText.textContent=authUser.email+" · прогресс синхронизируется между устройствами.";
+            authBtn.textContent="ВЫЙТИ";
+            authBtn.className="btn btn-light";
+            authBtn.onclick=logout;
+        }else{
+            authTitle.textContent="Аккаунт не подключён";
+            authText.textContent="Войди или зарегистрируйся, чтобы сохранять прогресс и играть с другого устройства.";
+            authBtn.textContent="ВОЙТИ / РЕГИСТРАЦИЯ";
+            authBtn.className="btn btn-pink";
+            authBtn.onclick=()=>openAuth("login");
+        }
+    }
     $("#usernameInput").value=state.username;
     $("#statGames").textContent=money(state.stats.games);
     $("#statWins").textContent=money(state.stats.wins);
@@ -2889,18 +3187,29 @@ function init(){
     bindTilt();
     markHotCards();
 
+    renderAuthStatus();
+
     if(firebaseReady){
-        setTimeout(publishPlayerData,1000);
-        setInterval(publishPlayerData,10000);
+        setTimeout(()=>publishPlayerData(false),1000);
+        setInterval(()=>publishPlayerData(false),10000);
     }
 
     setInterval(()=>{
-        broadcastMyUpdate();
+        if(authUser)saveState(false);
+        else publishPlayerData(false);
         if(document.getElementById("leaders").classList.contains("active"))renderLeaders();
     },3000);
 
     setTimeout(resizeCrashCanvas,200);
 }
+
+
+$("#authModal").addEventListener("click",e=>{
+    if(e.target.id==="authModal")closeAuth();
+});
+document.addEventListener("keydown",e=>{
+    if(e.key==="Escape")closeAuth();
+});
 
 init();
 </script>
