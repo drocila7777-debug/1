@@ -1693,7 +1693,7 @@ input:focus, select:focus{
         <div class="game-head">
             <div>
                 <div class="game-title">BLACKJACK</div>
-                <div class="game-sub">Классический режим, быстрый режим и режим с бонусом за 5 карт. Одиночная игра и онлайн 1 на 1.</div>
+                <div class="game-sub">Классический Blackjack: 21, Blackjack 3:2, дилер стоит на мягкой 17. Одиночная игра и онлайн 1 на 1.</div>
             </div>
             <button class="game-close" onclick="closeGames()">×</button>
         </div>
@@ -1705,11 +1705,7 @@ input:focus, select:focus{
                     <div class="bj-online-room" id="bjOnlineRoom">Нет комнаты</div>
                 </div>
                 <div class="row">
-                    <select class="input" id="bjOnlineMode" style="max-width:220px">
-                        <option value="classic">Классика</option>
-                        <option value="turbo">Турбо — двойная ставка</option>
-                        <option value="five">5 карт — бонус</option>
-                    </select>
+                    <input type="hidden" id="bjOnlineMode" value="classic">
                     <input class="input" id="bjOnlineBet" type="number" min="1" value="1000" style="max-width:150px">
                     <button class="btn btn-pink" id="bjFindBtn" onclick="bjOnlineFind()">НАЙТИ СОПЕРНИКА</button>
                     <button class="btn" id="bjCancelBtn" onclick="bjOnlineCancel()" disabled>ОТМЕНА</button>
@@ -1735,8 +1731,8 @@ input:focus, select:focus{
                 <button class="btn btn-pink" id="bjOnlineHit" onclick="bjOnlineHit()" disabled>ЕЩЁ</button>
                 <button class="btn btn-light" id="bjOnlineDouble" onclick="bjOnlineDouble()" disabled>УДВОИТЬ</button>
                 <button class="btn" id="bjOnlineStand" onclick="bjOnlineStand()" disabled>ХВАТИТ</button>
-                <button class="btn" id="bjOnlineSurrender" onclick="bjOnlineSurrender()" disabled>СДАЧА ½</button>
-                <button class="btn" id="bjOnlineAgain" onclick="bjOnlineFind()" style="display:none">ИГРАТЬ ЕЩЁ</button>
+                <button class="btn" id="bjOnlineSurrender" onclick="bjOnlineSurrender()" disabled style="display:none">СДАЧА ½</button>
+                <button class="btn" id="bjOnlineAgain" onclick="bjOnlinePlayAgain()" style="display:none">ИГРАТЬ ЕЩЁ</button>
             </div>
             <div class="bj-online-note">Ставка резервируется при входе в очередь. Матч начинается только после подтверждения второго игрока. При разрыве соединения комната не ломается: игрок может переподключиться к той же комнате.</div>
         </div>
@@ -1744,12 +1740,7 @@ input:focus, select:focus{
         <div style="margin-top:24px">
             <div class="game-sub" style="margin-bottom:8px">ОДИНОЧНЫЙ РЕЖИМ</div>
             <div class="row" style="margin-bottom:12px;flex-wrap:wrap">
-                <select class="input" id="bjMode" style="max-width:220px">
-                    <option value="classic">Классика</option>
-                    <option value="turbo">Турбо — двойная ставка</option>
-                    <option value="five">5 карт — бонус</option>
-                </select>
-                <div class="panel">Правила: <b id="bjModeInfo">дилер стоит на 17 · удвоение на первых 2 картах</b></div>
+                <input type="hidden" id="bjMode" value="classic"><div class="panel">Правила: <b id="bjModeInfo">Blackjack 3:2 · дилер стоит на мягкой 17 · удвоение на первых 2 картах</b></div>
             </div>
             <div class="blackjack-table">
                 <div class="hand-title">Дилер · <span id="dealerScore">?</span></div>
@@ -1763,7 +1754,7 @@ input:focus, select:focus{
                 <button class="btn btn-pink" id="hitBtn" onclick="hitBlackjack()" disabled>ЕЩЁ</button>
                 <button class="btn btn-light" id="doubleBtn" onclick="doubleBlackjack()" disabled>УДВОИТЬ</button>
                 <button class="btn" id="standBtn" onclick="standBlackjack()" disabled>ХВАТИТ</button>
-                <button class="btn" id="surrenderBtn" onclick="surrenderBlackjack()" disabled>СДАЧА ½</button>
+                <button class="btn" id="surrenderBtn" onclick="surrenderBlackjack()" disabled style="display:none">СДАЧА ½</button>
             </div>
         </div>
     </section>
@@ -3102,19 +3093,20 @@ const ranks=[["A",11],["2",2],["3",3],["4",4],["5",5],["6",6],["7",7],["8",8],["
 
 function bjRules(mode){
     return {
-        classic:{double:true,surrender:true,five:false,bonus:0,label:"дилер стоит на 17 · удвоение на первых 2 картах"},
-        turbo:{double:true,surrender:true,five:false,bonus:0,label:"удвоение на первых 2 картах · быстрый матч"},
-        five:{double:true,surrender:true,five:true,bonus:1.5,label:"5 карт без перебора = выплата 2.5× ставки"}
-    }[mode] || {double:true,surrender:true,five:false,bonus:0,label:"дилер стоит на 17"};
+        classic:{
+            double:true,
+            surrender:false,
+            five:false,
+            bonus:0,
+            label:"Blackjack 3:2 · дилер стоит на мягкой 17 · удвоение на первых 2 картах"
+        }
+    }.classic;
 }
 
-function bjModeLabel(mode){
-    return ({classic:"Классика",turbo:"Турбо",five:"5 карт — бонус"}[mode]||"Классика");
-}
+function bjModeLabel(mode){ return "Классика"; }
 
 function syncBjModeInfo(){
-    const mode=$("#bjMode")?.value||"classic";
-    if($("#bjModeInfo"))$("#bjModeInfo").textContent=bjRules(mode).label;
+    if($("#bjModeInfo"))$("#bjModeInfo").textContent=bjRules("classic").label;
 }
 
 function createCard(){
@@ -3174,7 +3166,7 @@ function startBlackjack(){
     const bet=Math.floor(Number($("#bjBet").value));
     if(!Number.isFinite(bet)||bet<=0)return notice("Укажи корректную ставку","bad");
     if(!spend(bet))return;
-    const mode=$("#bjMode")?.value||"classic";
+    const mode="classic";
     const deck=bjDeck();
     bj={active:true,bet,player:[deck.pop(),deck.pop()],dealer:[deck.pop(),deck.pop()],hidden:true,mode,doubled:false,finished:false,deck};
     registerGame();renderBlackjack(true);
@@ -3248,20 +3240,35 @@ function finishBlackjack(){
 }
 
 function endBlackjack(){
-    bj.active=false;bj.finished=true;
-    $("#hitBtn").disabled=true;$("#standBtn").disabled=true;$("#doubleBtn").disabled=true;$("#surrenderBtn").disabled=true;
+    bj.active=false;
+    bj.finished=true;
+
+    $("#hitBtn").disabled=true;
+    $("#standBtn").disabled=true;
+    $("#doubleBtn").disabled=true;
+    $("#surrenderBtn").disabled=true;
+
     saveState();
 
-    // Полный локальный рестарт состояния после показа результата.
-    // Сам интерфейс остаётся на экране результата, но следующая игра
-    // всегда начинается с чистого состояния и не получает старую руку.
     clearTimeout(window.__bjLocalRestartTimer);
     window.__bjLocalRestartTimer=setTimeout(()=>{
-        bj={active:false,bet:0,player:[],dealer:[],hidden:true,mode:$("#bjMode")?.value||"classic",doubled:false,finished:false,deck:[]};
+        bj={
+            active:false,
+            bet:0,
+            player:[],
+            dealer:[],
+            hidden:true,
+            mode:"classic",
+            doubled:false,
+            finished:false,
+            deck:[]
+        };
         renderBlackjack(false);
-        if($("#dealerScore"))$("#dealerScore").textContent="0";
-        if($("#playerScore"))$("#playerScore").textContent="0";
-    },1800);
+        $("#dealerHand").innerHTML="";
+        $("#playerHand").innerHTML="";
+        $("#dealerScore").textContent="?";
+        $("#playerScore").textContent="0";
+    },900);
 }
 
 if($("#bjMode"))$("#bjMode").addEventListener("change",syncBjModeInfo);
@@ -3319,25 +3326,44 @@ function bjOnlineRender(room){
         $("#bjOnlineAgain").style.display="inline-flex";$("#bjOnlineHit").style.display="none";$("#bjOnlineStand").style.display="none";$("#bjOnlineDouble").style.display="none";$("#bjOnlineSurrender").style.display="none";
         if(room.winner===uid)notice("Ты победил в онлайн-блэкджеке!","good");else if(room.winner==="draw")notice("Ничья — ставка возвращена","good");else notice("Победил соперник","bad");
     }else{
-        $("#bjOnlineAgain").style.display="none";$("#bjOnlineHit").style.display="inline-flex";$("#bjOnlineStand").style.display="inline-flex";$("#bjOnlineDouble").style.display="inline-flex";$("#bjOnlineSurrender").style.display="inline-flex";
+        $("#bjOnlineAgain").style.display="none";$("#bjOnlineHit").style.display="inline-flex";$("#bjOnlineStand").style.display="inline-flex";$("#bjOnlineDouble").style.display="inline-flex";$("#bjOnlineSurrender").style.display="none";
     }
 }
 
 function bjOnlineStopListener(){if(bjOnline.ref&&bjOnline.listener)bjOnline.ref.off("value",bjOnline.listener);bjOnline.ref=null;bjOnline.listener=null;}
 function bjOnlineResetUi(){
     bjOnlineStopListener();
-    clearTimeout(bjOnline.restartTimer);bjOnline.restartTimer=null;
-    bjOnline.roomId=null;bjOnline.role=null;bjOnline.bet=0;bjOnline.mode="classic";bjOnline.busy=false;bjOnline.settled=false;bjOnline.queueId=null;
+
+    clearTimeout(bjOnline.restartTimer);
+    bjOnline.restartTimer=null;
+
+    bjOnline.roomId=null;
+    bjOnline.role=null;
+    bjOnline.ref=null;
+    bjOnline.bet=0;
+    bjOnline.mode="classic";
+    bjOnline.busy=false;
+    bjOnline.settled=false;
+    bjOnline.queueId=null;
+
     $("#bjOnlineRoom").textContent="Нет комнаты";
+    $("#bjOnlineStatus").textContent="ОНЛАЙН-БЛЭКДЖЕК";
     $("#bjOnlineWait").style.display="block";
     $("#bjOnlineWait").textContent="Готово к новой игре";
     $("#bjOnlineDuel").style.display="none";
     $("#bjOnlineActions").style.display="none";
     $("#bjOnlineAgain").style.display="none";
+
     $("#bjOnlineHit").style.display="inline-flex";
     $("#bjOnlineStand").style.display="inline-flex";
     $("#bjOnlineDouble").style.display="inline-flex";
-    $("#bjOnlineSurrender").style.display="inline-flex";
+    $("#bjOnlineSurrender").style.display="none";
+
+    $("#bjOnlineHit").disabled=true;
+    $("#bjOnlineStand").disabled=true;
+    $("#bjOnlineDouble").disabled=true;
+    $("#bjOnlineSurrender").disabled=true;
+
     $("#bjFindBtn").disabled=false;
     $("#bjCancelBtn").disabled=true;
 }
@@ -3348,37 +3374,64 @@ function bjOnlineListen(roomId){
         const room=snap.val();
         if(!room){bjOnlineResetUi();notice("Комната закрыта","bad");return;}
         bjOnlineRender(room);
+        if(room.status==="finished"){
+            clearTimeout(bjOnline.restartTimer);
+            bjOnline.restartTimer=setTimeout(()=>{
+                if(bjOnline.roomId===roomId) bjOnlineResetUi();
+            },900);
+        }
         // Только владелец очереди удаляет свою запись. Это устраняет PERMISSION_DENIED на телефоне.
         if(room.status==="playing"&&bjOnline.role==="host"&&bjOnline.queueId){try{await bjOnlineQueueRef(bjOnline.queueId).remove();}catch(e){console.warn("queue cleanup",e);}}
         if(room.status==="finished"&&!bjOnline.settled){
             bjOnline.settled=true;
             const uid=bjOnlineUid();
-            if(room.winner===uid){addBalance(Number(room.bet||0)*2);registerWin(Number(room.bet||0)*2);}
-            else if(room.winner==="draw"){addBalance(Number(room.bet||0));}
+            const myWager=Number(room.wagers&&room.wagers[uid]||room.bet||0);
+            const totalPot=Object.values(room.wagers||{}).reduce((s,v)=>s+Number(v||0),0)||Number(room.bet||0)*2;
+            if(room.winner===uid){
+                addBalance(totalPot);
+                registerWin(totalPot);
+            }else if(room.winner==="draw"){
+                addBalance(myWager);
+            }
             saveState();
 
             // После завершения матч больше не должен блокировать кнопку
             // «Найти соперника». Оставляем результат на экране на короткое время,
             // затем полностью освобождаем локальное состояние комнаты.
             clearTimeout(bjOnline.restartTimer);
-            bjOnline.restartTimer=setTimeout(()=>{
-                if(bjOnline.roomId===roomId) bjOnlineResetUi();
-            },2200);
+            bjOnline.restartTimer=setTimeout(()=>{ if(bjOnline.roomId===roomId) bjOnlineResetUi(); },700);
         }
     };
     bjOnline.ref.on("value",bjOnline.listener);
 }
 
 function bjOnlineValidateMode(){
-    const mode=$("#bjOnlineMode")?.value||"classic";
-    if(!bjRules(mode))return "classic";
-    return mode;
+    return "classic";
+}
+
+async function bjOnlinePlayAgain(){
+    // Never allow a finished room to keep the client locked.
+    bjOnlineResetUi();
+    await new Promise(r=>setTimeout(r,50));
+    return bjOnlineFind();
 }
 
 async function bjOnlineFind(){
     const uid=bjOnlineUid();
     if(!firebaseReady||!db||!uid)return notice("Для онлайн-игры войди в аккаунт","bad");
-    if(bjOnline.roomId)return notice("Ты уже находишься в комнате","bad");
+    if(bjOnline.roomId){
+        try{
+            const current=await bjOnlineRoomRef(bjOnline.roomId).once("value");
+            const currentRoom=current.val();
+            if(!currentRoom || currentRoom.status==="finished"){
+                bjOnlineResetUi();
+            }else{
+                return notice("Ты уже находишься в комнате","bad");
+            }
+        }catch(e){
+            bjOnlineResetUi();
+        }
+    }
     const bet=Math.floor(Number($("#bjOnlineBet").value)),mode=bjOnlineValidateMode();
     if(!Number.isFinite(bet)||bet<=0)return notice("Укажи корректную ставку","bad");
     if(bet>state.balance)return notice("Недостаточно монет","bad");
@@ -3409,7 +3462,7 @@ async function bjOnlineFind(){
             const p2=uid;
             const a={uid:p1,name:room.players?.[p1]?.name||candidate.q.name||"Игрок",cards:[deck[0],deck[2]],done:false,bust:false};
             const b={uid:p2,name:bjOnlineName(),cards:[deck[1],deck[3]],done:false,bust:false};
-            await roomRef.update({status:"playing",playerIds:[p1,p2],players:{[p1]:a,[p2]:b},turn:p1,deck,mode,bet,startedAt:firebase.database.ServerValue.TIMESTAMP,doubled:{}});
+            await roomRef.update({status:"playing",playerIds:[p1,p2],players:{[p1]:a,[p2]:b},turn:p1,deck,mode,bet,startedAt:firebase.database.ServerValue.TIMESTAMP,doubled:{},wagers:{[p1]:Number(bet),[p2]:Number(bet)}});
             bjOnline={...bjOnline,roomId:candidate.q.roomId,role:"guest",bet,mode,queueId:null,busy:false,settled:false};
             bjOnlineListen(bjOnline.roomId);
             reserved=false;
@@ -3420,7 +3473,7 @@ async function bjOnlineFind(){
         const roomId="bj_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
         const deck=bjDeck();
         const roomRef=roomsRef.child(roomId);
-        await roomRef.set({status:"waiting",host:uid,playerIds:[uid],bet,mode,deck,players:{[uid]:{uid,name:bjOnlineName(),cards:[],done:false,bust:false}},createdAt:firebase.database.ServerValue.TIMESTAMP});
+        await roomRef.set({status:"waiting",host:uid,playerIds:[uid],bet,mode,deck,players:{[uid]:{uid,name:bjOnlineName(),cards:[],done:false,bust:false}},createdAt:firebase.database.ServerValue.TIMESTAMP,wagers:{[uid]:Number(bet)},doubled:{}});
         await queueRef.child(uid).set({uid,roomId,bet,mode,name:bjOnlineName(),createdAt:firebase.database.ServerValue.TIMESTAMP});
         bjOnline={...bjOnline,roomId,role:"host",bet,mode,queueId:uid,busy:false,settled:false};
         bjOnlineListen(roomId);reserved=false;
@@ -3456,15 +3509,15 @@ async function bjOnlineAction(action){
         if(!room||room.status!=="playing")return;
         const me=room.players&&room.players[uid];
         if(!me||me.done||room.turn!==uid)return;
-        const rules=bjRules(room.mode||bjOnline.mode),cards=Array.isArray(me.cards)?me.cards.slice():[],deck=Array.isArray(room.deck)?room.deck.slice():[];
+        const rules=bjRules("classic"),cards=Array.isArray(me.cards)?me.cards.slice():[],deck=Array.isArray(room.deck)?room.deck.slice():[];
         const doubled=room.doubled||{};
         const update={};
         if(action==="double"){
             if(cards.length!==2||doubled[uid])return;
             if(!spend(Number(room.bet||0)))return;
             const next=deck.shift();if(!next)return;
-            cards.push(next);update["players/"+uid+"/cards"]=cards;update["players/"+uid+"/done"]=true;update["players/"+uid+"/bust"]=handValue(cards)>21;update["doubled/"+uid]=true;update.deck=deck;
-        }else if(action==="surrender"){
+            cards.push(next);update["players/"+uid+"/cards"]=cards;update["players/"+uid+"/done"]=true;update["players/"+uid+"/bust"]=handValue(cards)>21;update["doubled/"+uid]=true;update["wagers/"+uid]=Number(room.bet||0)*2;update.deck=deck;
+        }else if(action==="surrender"){ return;
             if(cards.length!==2||doubled[uid])return;
             update["players/"+uid+"/done"]=true;update["players/"+uid+"/surrender"]=true;update["players/"+uid+"/bust"]=false;
         }else if(action==="hit"){
@@ -3495,11 +3548,7 @@ async function bjOnlineAction(action){
 function bjOnlineHit(){bjOnlineAction("hit");}
 function bjOnlineDouble(){bjOnlineAction("double");}
 function bjOnlineStand(){bjOnlineAction("stand");}
-function bjOnlineSurrender(){bjOnlineAction("surrender");}
-
-window.addEventListener("beforeunload",()=>{
-    if(bjOnline.queueId&&db){try{bjOnlineQueueRef(bjOnline.queueId).remove();}catch(_){} }
-});
+function bjOnlineSurrender(){ return; }
 
 /* =========================================================
    CRASH
