@@ -1523,6 +1523,445 @@ input:focus, select:focus{
   html { scroll-behavior: auto; }
 }
 </style>
+
+<style id="blackjack-premium-redesign">
+/* ===== PREMIUM BLACKJACK TABLE ===== */
+#blackjack .blackjack-table{
+  --felt:#063b2b; --felt2:#04291f; --gold:#d8b56a; --gold2:#f4d895;
+  min-height:560px!important; padding:34px 34px 30px!important; position:relative; overflow:hidden;
+  border:10px solid #17181a!important; border-radius:26px!important;
+  background:
+    radial-gradient(circle at 50% 38%,rgba(24,150,108,.22),transparent 36%),
+    radial-gradient(circle at 50% 100%,rgba(0,0,0,.55),transparent 48%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 4px),
+    linear-gradient(145deg,var(--felt),var(--felt2))!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12), inset 0 0 100px rgba(0,0,0,.45), 0 28px 80px rgba(0,0,0,.45)!important;
+}
+#blackjack .blackjack-table:before{
+  content:"BLACKJACK"; top:50%; left:50%; right:auto; transform:translate(-50%,-50%);
+  color:rgba(255,255,255,.035); font:900 clamp(55px,10vw,125px) 'Anton',sans-serif;
+  letter-spacing:.04em; white-space:nowrap; pointer-events:none;
+}
+#blackjack .blackjack-table:after{
+  content:"INSPIRED BY THE CLASSIC TABLE • DEALER STANDS ON 17";
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+  color:rgba(255,255,255,.2);font:600 8px 'DM Mono',monospace;letter-spacing:.16em;white-space:nowrap;
+}
+#blackjack .hand-title{
+  position:relative;z-index:2; display:flex;align-items:center;gap:9px;
+  margin:0 0 12px!important; color:rgba(255,255,255,.62)!important;
+  font:700 10px 'DM Mono',monospace!important;letter-spacing:.16em!important;
+}
+#blackjack .hand-title span{
+  color:#f4d895; background:rgba(0,0,0,.22); border:1px solid rgba(244,216,149,.2);
+  padding:4px 7px; border-radius:999px; letter-spacing:.04em;
+}
+#blackjack .hand{
+  position:relative;z-index:2;min-height:160px!important;padding:10px 6px 30px!important;
+  gap:0!important;align-items:flex-start; border-bottom:1px solid rgba(255,255,255,.10)!important;
+}
+#blackjack .hand:last-child{border-bottom:0;padding-top:20px!important}
+#blackjack .card{
+  width:88px!important;height:124px!important; margin-right:-22px; border-radius:13px!important;
+  padding:10px!important; background:linear-gradient(145deg,#fffefa,#e9e6dc)!important;
+  border:1px solid rgba(0,0,0,.16)!important; color:#101112!important;
+  box-shadow:5px 12px 18px rgba(0,0,0,.34),inset 0 0 0 1px rgba(255,255,255,.75)!important;
+  transition:transform .25s var(--spring),margin .25s var(--spring); overflow:hidden;
+}
+#blackjack .card:hover{transform:translateY(-8px) rotate(-1deg);margin-right:-15px;z-index:8}
+#blackjack .card.red{color:#c63c48!important}
+#blackjack .card:after{content:""!important}
+#blackjack .card.back{
+  background:
+    radial-gradient(circle at center,rgba(216,181,106,.3) 0 2px,transparent 3px 10px),
+    repeating-linear-gradient(45deg,#071f19 0 7px,#0b4936 7px 14px)!important;
+  border:2px solid #d8b56a!important; box-shadow:5px 12px 22px rgba(0,0,0,.4),inset 0 0 0 3px rgba(255,255,255,.08)!important;
+}
+#blackjack .card.back:before{content:"♠";font-size:30px;color:#d8b56a;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+#blackjack .card div:first-child,#blackjack .card div:last-child{font-weight:900!important}
+#blackjack .card div:nth-child(2){font-size:38px!important;line-height:1}
+#blackjack > div[style*="margin-top:24px"]{margin-top:28px!important}
+#blackjack .bj-online-panel{
+  margin-top:0!important; padding:20px!important; border-radius:18px!important;
+  background:linear-gradient(145deg,#121416,#0c0e0f)!important; border:1px solid rgba(255,255,255,.12)!important;
+  box-shadow:0 14px 45px rgba(0,0,0,.25)!important;
+}
+#blackjack .bj-online-status{color:#d8b56a;font:800 10px 'DM Mono',monospace;letter-spacing:.16em}
+#blackjack .bj-online-room{color:#777;font-family:'DM Mono',monospace}
+#blackjack .bj-online-note{color:#686a68;font-size:10px;line-height:1.55}
+#blackjack .bj-duel-card{
+  background:linear-gradient(145deg,#151719,#0e1011)!important;border:1px solid rgba(255,255,255,.11)!important;
+  border-radius:14px!important;padding:16px!important;position:relative;overflow:hidden;
+}
+#blackjack .bj-duel-card:before{content:"PLAYER";position:absolute;right:14px;top:12px;color:rgba(255,255,255,.16);font:700 8px 'DM Mono',monospace;letter-spacing:.14em}
+#blackjack .bj-duel-card:nth-child(2):before{content:"RIVAL"}
+#blackjack .bj-duel-name{font:800 14px 'Unbounded',sans-serif}
+#blackjack .bj-duel-score{color:#777;font-size:10px;margin-top:5px}
+#blackjack .bj-duel-score b{color:#f4d895}
+#blackjack .bj-duel-hand{display:flex;gap:0;margin-top:12px;min-height:90px}
+#blackjack .bj-duel-hand .card{width:52px!important;height:74px!important;margin-right:-16px;padding:7px!important}
+#blackjack .bj-duel-hand .card div:nth-child(2){font-size:22px!important}
+#blackjack .game-head{align-items:center!important}
+#blackjack .game-head .game-title{font-size:42px!important;letter-spacing:.02em!important}
+#blackjack .game-head .game-sub{max-width:650px}
+#blackjack .row .btn{min-width:116px}
+#blackjack #hitBtn,#blackjack #bjOnlineHit{box-shadow:0 10px 28px rgba(202,255,0,.12)}
+#blackjack #standBtn,#blackjack #bjOnlineStand{border:1px solid rgba(255,255,255,.16)}
+@media(max-width:900px){
+  #blackjack .blackjack-table{min-height:455px!important;padding:24px 18px 28px!important;border-width:7px!important;border-radius:20px!important}
+  #blackjack .hand{min-height:125px!important}
+  #blackjack .card{width:68px!important;height:96px!important;margin-right:-18px;padding:8px!important}
+  #blackjack .card div:nth-child(2){font-size:29px!important}
+  #blackjack .blackjack-table:after{font-size:6px;letter-spacing:.08em}
+}
+@media(max-width:600px){
+  #blackjack .game-head .game-title{font-size:28px!important}
+  #blackjack .blackjack-table{padding:20px 12px 24px!important;min-height:405px!important}
+  #blackjack .hand{min-height:105px!important;padding-bottom:20px!important}
+  #blackjack .card{width:55px!important;height:80px!important;margin-right:-14px;padding:6px!important;border-radius:9px!important}
+  #blackjack .card div:nth-child(2){font-size:23px!important}
+  #blackjack .card.back:before{font-size:21px}
+  #blackjack .blackjack-table:before{font-size:48px}
+  #blackjack .blackjack-table:after{display:none}
+  #blackjack .bj-duel{grid-template-columns:1fr!important}
+}
+</style>
+
+
+<style id="blackjack-site-palette">
+/* BLACKJACK — same visual language as the rest of the site */
+#blackjack .blackjack-table{
+  --bj-acid:#caff00;--bj-violet:#7c3cff;--bj-pink:#ff4bd8;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(124,60,255,.14),transparent 42%),
+    radial-gradient(circle at 18% 85%,rgba(202,255,0,.09),transparent 30%),
+    linear-gradient(145deg,#101013,#070708 72%)!important;
+  border:1px solid #29292f!important;
+  border-radius:2px!important;
+  box-shadow:inset 0 0 90px rgba(124,60,255,.07),0 25px 80px rgba(0,0,0,.32)!important;
+}
+#blackjack .blackjack-table:before{
+  content:"BLACKJACK"!important;
+  top:50%!important;right:auto!important;left:50%!important;
+  transform:translate(-50%,-50%)!important;
+  color:rgba(202,255,0,.025)!important;
+  font:1000 clamp(70px,12vw,150px)/1 Arial,sans-serif!important;
+  letter-spacing:-.08em!important;
+  pointer-events:none;
+}
+#blackjack .blackjack-table:after{
+  content:"21 • DEALER STANDS ON 17";
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  color:rgba(255,255,255,.24);font:700 8px 'DM Mono',monospace;letter-spacing:.16em;
+  white-space:nowrap;pointer-events:none;
+}
+#blackjack .hand-title{color:#92928d!important;letter-spacing:.16em!important}
+#blackjack .hand-title span{color:var(--lime)!important}
+#blackjack .hand{border-bottom-color:rgba(255,255,255,.09)!important}
+#blackjack .card{
+  background:linear-gradient(145deg,#f7f7f4,#deded9)!important;
+  color:#070708!important;border:1px solid rgba(255,255,255,.55)!important;
+  border-radius:2px!important;
+  box-shadow:8px 14px 28px rgba(0,0,0,.45)!important;
+}
+#blackjack .card.red{color:#ff4b4b!important}
+#blackjack .card.back{
+  background:
+    repeating-linear-gradient(45deg,#111115 0 7px,#19191e 7px 14px)!important;
+  border:1px solid var(--lime)!important;
+  box-shadow:0 0 0 1px rgba(202,255,0,.08),8px 14px 28px rgba(0,0,0,.5)!important;
+}
+#blackjack .card.back:before{color:var(--lime)!important;text-shadow:0 0 18px rgba(202,255,0,.22)!important}
+#blackjack .card:after{content:""!important}
+#blackjack .bj-online-panel{
+  background:#101013!important;border:1px solid #28282d!important;border-radius:0!important;
+}
+#blackjack .bj-duel-card{background:#0d0d10!important;border:1px solid #29292f!important;border-radius:0!important}
+#blackjack .bj-duel-score{color:#92928d!important}
+#blackjack .bj-online-status{color:var(--lime)!important}
+#blackjack .game-close:hover{background:var(--lime)!important;color:#070708!important}
+#blackjack .btn-pink,#blackjack .btn-green,#blackjack .btn-light{border-radius:0!important}
+#blackjack .btn-pink{background:var(--lime)!important;color:#070708!important;border-color:var(--lime)!important}
+#blackjack .btn-green{background:#f5f5f0!important;color:#070708!important;border-color:#f5f5f0!important}
+#blackjack .btn-light{background:#17171b!important;color:#fff!important;border-color:#303038!important}
+#blackjack .input,#blackjack select{background:#0b0b0e!important;color:#fff!important;border:1px solid #303038!important;border-radius:0!important}
+#blackjack .btn-pink:hover{box-shadow:0 0 25px rgba(202,255,0,.18)!important}
+@media(max-width:900px){#blackjack .blackjack-table{min-height:420px!important}}
+</style>
+
+<style id="all-buttons-premium-redesign">
+/* === GLOBAL BUTTON SYSTEM — matches site palette === */
+:root{
+  --btn-lime:#caff00;
+  --btn-lime-soft:#e1ff66;
+  --btn-purple:#7c3cff;
+  --btn-pink:#ff3ea5;
+  --btn-bg:#111214;
+  --btn-bg2:#18191d;
+  --btn-border:#303239;
+  --btn-text:#f5f5f7;
+}
+
+button,
+.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select{
+  font:inherit;
+}
+
+button,
+.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"]{
+  position:relative;
+  isolation:isolate;
+  min-height:44px;
+  padding:11px 18px;
+  border:1px solid var(--btn-border);
+  border-radius:10px;
+  background:linear-gradient(180deg,#1b1c20 0%,#111214 100%);
+  color:var(--btn-text);
+  font-weight:800;
+  letter-spacing:.02em;
+  cursor:pointer;
+  transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease, color .16s ease, filter .16s ease;
+  box-shadow:0 5px 16px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.045);
+  overflow:hidden;
+}
+
+button::before,
+.btn::before,
+input[type="button"]::before,
+input[type="submit"]::before,
+input[type="reset"]::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,.10) 50%,transparent 80%);
+  transform:translateX(-120%);
+  transition:transform .45s ease;
+}
+
+button:hover,
+.btn:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover{
+  transform:translateY(-2px);
+  border-color:#555861;
+  box-shadow:0 8px 24px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.07);
+}
+button:hover::before,
+.btn:hover::before,
+input[type="button"]:hover::before,
+input[type="submit"]:hover::before,
+input[type="reset"]:hover::before{transform:translateX(120%)}
+
+button:active,
+.btn:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active{
+  transform:translateY(0) scale(.97);
+}
+
+button:focus-visible,
+.btn:focus-visible,
+select:focus-visible{
+  outline:2px solid var(--btn-lime);
+  outline-offset:3px;
+}
+
+button:disabled,
+.btn:disabled,
+input:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+  transform:none!important;
+  box-shadow:none;
+}
+
+/* Primary / action buttons */
+button.primary,
+.btn.primary,
+button.success,
+.btn.success,
+button.play,
+.btn.play,
+button.new-game,
+.btn.new-game{
+  background:linear-gradient(180deg,#d8ff2b 0%,#b9eb00 100%);
+  color:#0a0b08;
+  border-color:var(--btn-lime);
+  box-shadow:0 0 0 1px rgba(202,255,0,.18),0 7px 24px rgba(202,255,0,.16),inset 0 1px 0 rgba(255,255,255,.55);
+}
+button.primary:hover,
+.btn.primary:hover,
+button.success:hover,
+.btn.success:hover,
+button.play:hover,
+.btn.play:hover,
+button.new-game:hover,
+.btn.new-game:hover{
+  border-color:#efffa4;
+  box-shadow:0 0 0 1px rgba(202,255,0,.3),0 10px 30px rgba(202,255,0,.25),inset 0 1px 0 rgba(255,255,255,.65);
+}
+
+/* Purple secondary */
+button.secondary,
+.btn.secondary,
+button.purple,
+.btn.purple{
+  background:linear-gradient(180deg,#8c55ff 0%,#6930e8 100%);
+  color:#fff;
+  border-color:#9869ff;
+  box-shadow:0 7px 22px rgba(124,60,255,.20),inset 0 1px 0 rgba(255,255,255,.16);
+}
+button.secondary:hover,
+.btn.secondary:hover,
+button.purple:hover,
+.btn.purple:hover{
+  box-shadow:0 10px 30px rgba(124,60,255,.32),inset 0 1px 0 rgba(255,255,255,.22);
+}
+
+/* Pink accent */
+button.danger,
+.btn.danger,
+button.pink,
+.btn.pink,
+button.cancel,
+.btn.cancel{
+  background:linear-gradient(180deg,#ff58b2 0%,#e82d91 100%);
+  color:#fff;
+  border-color:#ff70bd;
+  box-shadow:0 7px 22px rgba(255,62,165,.18),inset 0 1px 0 rgba(255,255,255,.18);
+}
+button.danger:hover,
+.btn.danger:hover,
+button.pink:hover,
+.btn.pink:hover,
+button.cancel:hover,
+.btn.cancel:hover{box-shadow:0 10px 30px rgba(255,62,165,.3)}
+
+/* Ghost / outline */
+button.ghost,
+.btn.ghost,
+button.outline,
+.btn.outline{
+  background:rgba(255,255,255,.025);
+  color:#e8e9ed;
+  border-color:#3a3c44;
+}
+button.ghost:hover,
+.btn.ghost:hover,
+button.outline:hover,
+.btn.outline:hover{
+  color:var(--btn-lime);
+  border-color:rgba(202,255,0,.65);
+  background:rgba(202,255,0,.055);
+}
+
+/* Compact icon buttons */
+button.icon,
+.btn.icon{
+  min-width:42px;
+  width:42px;
+  height:42px;
+  min-height:42px;
+  padding:0;
+  display:inline-grid;
+  place-items:center;
+  border-radius:10px;
+}
+
+/* Game action row */
+.game .controls button,
+.game .actions button,
+.game .game-actions button,
+.blackjack-table button{
+  min-width:112px;
+}
+
+/* Close buttons */
+button.close,
+.close-btn,
+.game-close{
+  min-width:40px!important;
+  width:40px;
+  min-height:40px;
+  height:40px;
+  padding:0;
+  border-radius:10px;
+  background:#17181c;
+  color:#aaaeb8;
+}
+button.close:hover,
+.close-btn:hover,
+.game-close:hover{
+  color:#fff;
+  border-color:var(--btn-pink);
+  background:rgba(255,62,165,.08);
+  box-shadow:0 0 18px rgba(255,62,165,.18);
+}
+
+/* Selects */
+select{
+  min-height:44px;
+  padding:10px 38px 10px 13px;
+  border:1px solid #34363d;
+  border-radius:10px;
+  background:#111214;
+  color:#f4f4f5;
+  font-weight:700;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  transition:border-color .16s ease, box-shadow .16s ease;
+}
+select:hover{border-color:#555861}
+select:focus{border-color:var(--btn-lime);box-shadow:0 0 0 3px rgba(202,255,0,.10);outline:none}
+
+/* Inputs that visually accompany buttons */
+input[type="text"],input[type="number"],input[type="search"],input[type="email"]{
+  border-radius:10px;
+}
+
+@media(max-width:600px){
+  button,.btn,input[type="button"],input[type="submit"],input[type="reset"],select{min-height:42px;padding:10px 14px}
+  .game .controls button,.game .actions button,.game .game-actions button,.blackjack-table button{min-width:0;flex:1}
+}
+</style>
+
+<style id="header-icons-fix">
+/* Header icons: strict visual centering */
+.header-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:9px!important;height:100%!important}
+.header-actions .header-btn{display:flex!important;align-items:center!important;justify-content:center!important;align-self:center!important;flex:0 0 42px!important;width:42px!important;height:42px!important;padding:0!important;margin:0!important;line-height:0!important;text-align:center!important;box-sizing:border-box!important;position:relative!important}
+.header-actions .header-btn svg{display:block!important;width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;margin:0!important;position:static!important;transform:none!important}
+.header-actions .header-btn#soundBtn,.header-actions .header-btn#themeBtn{line-height:0!important}
+.header-actions .auth-status{display:flex!important;align-items:center!important;height:100%!important}
+.header-actions .auth-btn{display:flex!important;align-items:center!important;justify-content:center!important;height:42px!important;line-height:1!important;margin:0!important}
+@media(max-width:600px){
+  .header-actions{gap:6px!important}
+  .header-actions .header-btn{flex-basis:38px!important;width:38px!important;height:38px!important}
+  .header-actions .header-btn svg{width:19px!important;height:19px!important}
+  .header-actions .auth-btn{height:38px!important}
+}
+</style>
+
+<style id="live-wins-crash-upgrade">
+.boom-live{position:relative;grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 16px;height:48px;background:#0b0b0e;border:1px solid #29292f;overflow:hidden;white-space:nowrap}
+.boom-live:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#0b0b0e 0%,transparent 10%,transparent 90%,#0b0b0e 100%);z-index:3}
+.boom-live-dot{width:7px;height:7px;border-radius:50%;background:#caff00;box-shadow:0 0 14px #caff00;flex:none;z-index:4;animation:liveDot 1s ease-in-out infinite}
+.boom-live>b{position:relative;z-index:4;flex:none;color:#fff!important}
+.boom-live-track{display:flex;align-items:center;gap:42px;min-width:max-content;animation:boomTicker 28s linear infinite;font:700 11px Arial;color:#aaa;will-change:transform}
+.boom-live-track:hover{animation-play-state:paused}
+.boom-live-track span{display:inline-flex;align-items:center;gap:7px;flex:none}
+.boom-live-track .boom-green{color:#caff00!important}
+@keyframes liveDot{50%{opacity:.45;transform:scale(.72)}}
+@media(max-width:760px){.boom-live{height:44px;padding:0 12px;gap:9px}.boom-live-track{gap:28px;animation-duration:22s}.boom-live>b{font-size:9px!important}}
+</style>
 </head>
 <body>
 <div class="brand-line"></div>
@@ -1693,7 +2132,7 @@ input:focus, select:focus{
         <div class="game-head">
             <div>
                 <div class="game-title">BLACKJACK</div>
-                <div class="game-sub">Классический Blackjack: 21, Blackjack 3:2, дилер стоит на мягкой 17. Одиночная игра и онлайн 1 на 1.</div>
+                <div class="game-sub">Классический режим, быстрый режим и режим с бонусом за 5 карт. Одиночная игра и онлайн 1 на 1.</div>
             </div>
             <button class="game-close" onclick="closeGames()">×</button>
         </div>
@@ -1705,7 +2144,11 @@ input:focus, select:focus{
                     <div class="bj-online-room" id="bjOnlineRoom">Нет комнаты</div>
                 </div>
                 <div class="row">
-                    <input type="hidden" id="bjOnlineMode" value="classic">
+                    <select class="input" id="bjOnlineMode" style="max-width:220px">
+                        <option value="classic">Классика</option>
+                        <option value="turbo">Турбо — двойная ставка</option>
+                        <option value="five">5 карт — бонус</option>
+                    </select>
                     <input class="input" id="bjOnlineBet" type="number" min="1" value="1000" style="max-width:150px">
                     <button class="btn btn-pink" id="bjFindBtn" onclick="bjOnlineFind()">НАЙТИ СОПЕРНИКА</button>
                     <button class="btn" id="bjCancelBtn" onclick="bjOnlineCancel()" disabled>ОТМЕНА</button>
@@ -1731,8 +2174,8 @@ input:focus, select:focus{
                 <button class="btn btn-pink" id="bjOnlineHit" onclick="bjOnlineHit()" disabled>ЕЩЁ</button>
                 <button class="btn btn-light" id="bjOnlineDouble" onclick="bjOnlineDouble()" disabled>УДВОИТЬ</button>
                 <button class="btn" id="bjOnlineStand" onclick="bjOnlineStand()" disabled>ХВАТИТ</button>
-                <button class="btn" id="bjOnlineSurrender" onclick="bjOnlineSurrender()" disabled style="display:none">СДАЧА ½</button>
-                <button class="btn" id="bjOnlineAgain" onclick="bjOnlinePlayAgain()" style="display:none">ИГРАТЬ ЕЩЁ</button>
+                <button class="btn" id="bjOnlineSurrender" onclick="bjOnlineSurrender()" disabled>СДАЧА ½</button>
+                <button class="btn" id="bjOnlineAgain" onclick="bjOnlineFind()" style="display:none">ИГРАТЬ ЕЩЁ</button>
             </div>
             <div class="bj-online-note">Ставка резервируется при входе в очередь. Матч начинается только после подтверждения второго игрока. При разрыве соединения комната не ломается: игрок может переподключиться к той же комнате.</div>
         </div>
@@ -1740,7 +2183,12 @@ input:focus, select:focus{
         <div style="margin-top:24px">
             <div class="game-sub" style="margin-bottom:8px">ОДИНОЧНЫЙ РЕЖИМ</div>
             <div class="row" style="margin-bottom:12px;flex-wrap:wrap">
-                <input type="hidden" id="bjMode" value="classic"><div class="panel">Правила: <b id="bjModeInfo">Blackjack 3:2 · дилер стоит на мягкой 17 · удвоение на первых 2 картах</b></div>
+                <select class="input" id="bjMode" style="max-width:220px">
+                    <option value="classic">Классика</option>
+                    <option value="turbo">Турбо — двойная ставка</option>
+                    <option value="five">5 карт — бонус</option>
+                </select>
+                <div class="panel">Правила: <b id="bjModeInfo">дилер стоит на 17 · удвоение на первых 2 картах</b></div>
             </div>
             <div class="blackjack-table">
                 <div class="hand-title">Дилер · <span id="dealerScore">?</span></div>
@@ -1754,7 +2202,7 @@ input:focus, select:focus{
                 <button class="btn btn-pink" id="hitBtn" onclick="hitBlackjack()" disabled>ЕЩЁ</button>
                 <button class="btn btn-light" id="doubleBtn" onclick="doubleBlackjack()" disabled>УДВОИТЬ</button>
                 <button class="btn" id="standBtn" onclick="standBlackjack()" disabled>ХВАТИТ</button>
-                <button class="btn" id="surrenderBtn" onclick="surrenderBlackjack()" disabled style="display:none">СДАЧА ½</button>
+                <button class="btn" id="surrenderBtn" onclick="surrenderBlackjack()" disabled>СДАЧА ½</button>
             </div>
         </div>
     </section>
@@ -3093,20 +3541,19 @@ const ranks=[["A",11],["2",2],["3",3],["4",4],["5",5],["6",6],["7",7],["8",8],["
 
 function bjRules(mode){
     return {
-        classic:{
-            double:true,
-            surrender:false,
-            five:false,
-            bonus:0,
-            label:"Blackjack 3:2 · дилер стоит на мягкой 17 · удвоение на первых 2 картах"
-        }
-    }.classic;
+        classic:{double:true,surrender:true,five:false,bonus:0,label:"дилер стоит на 17 · удвоение на первых 2 картах"},
+        turbo:{double:true,surrender:true,five:false,bonus:0,label:"удвоение на первых 2 картах · быстрый матч"},
+        five:{double:true,surrender:true,five:true,bonus:1.5,label:"5 карт без перебора = выплата 2.5× ставки"}
+    }[mode] || {double:true,surrender:true,five:false,bonus:0,label:"дилер стоит на 17"};
 }
 
-function bjModeLabel(mode){ return "Классика"; }
+function bjModeLabel(mode){
+    return ({classic:"Классика",turbo:"Турбо",five:"5 карт — бонус"}[mode]||"Классика");
+}
 
 function syncBjModeInfo(){
-    if($("#bjModeInfo"))$("#bjModeInfo").textContent=bjRules("classic").label;
+    const mode="classic";
+    if($("#bjModeInfo"))$("#bjModeInfo").textContent=bjRules(mode).label;
 }
 
 function createCard(){
@@ -3158,26 +3605,87 @@ function renderBlackjack(animated=true){
     $("#hitBtn").disabled=!active;
     $("#standBtn").disabled=!active;
     $("#doubleBtn").disabled=!active || bj.player.length!==2 || bj.doubled || !bjRules(bj.mode).double || state.balance<bj.bet;
-    $("#surrenderBtn").disabled=!active || bj.player.length!==2 || bj.doubled || !bjRules(bj.mode).surrender;
+    $("#surrenderBtn").disabled=true;
+}
+
+
+function resetBlackjackState(){
+    clearTimeout(window.__bjLocalRestartTimer);
+    bj = {
+        active:false,
+        finished:false,
+        bet:0,
+        player:[],
+        dealer:[],
+        hidden:true,
+        mode:"classic",
+        doubled:false,
+        deck:[]
+    };
+    if($("#hitBtn"))$("#hitBtn").disabled=true;
+    if($("#standBtn"))$("#standBtn").disabled=true;
+    if($("#doubleBtn"))$("#doubleBtn").disabled=true;
+    if($("#surrenderBtn"))$("#surrenderBtn").disabled=true;
+    if($("#dealerHand"))$("#dealerHand").innerHTML="";
+    if($("#playerHand"))$("#playerHand").innerHTML="";
+    if($("#dealerScore"))$("#dealerScore").textContent="0";
+    if($("#playerScore"))$("#playerScore").textContent="0";
+    try{ renderBlackjack(false); }catch(_){}
 }
 
 function startBlackjack(){
-    if(bj.active)return notice("Сначала закончи текущую игру","bad");
+    // A completed/stale round must NEVER block a new round.
+    if(bj.active){
+        if(bj.finished || (bj.player.length===0 && bj.dealer.length===0)){
+            resetBlackjackState();
+        }else{
+            // If the old round has no actionable state anymore, recover automatically.
+            const hasButtons = $("#hitBtn") && !$("#hitBtn").disabled;
+            const hasCards = (bj.player||[]).length>0 || (bj.dealer||[]).length>0;
+            if(!hasButtons && hasCards){
+                resetBlackjackState();
+            }else{
+                return notice("Сначала закончи текущую игру","bad");
+            }
+        }
+    }
+
     const bet=Math.floor(Number($("#bjBet").value));
     if(!Number.isFinite(bet)||bet<=0)return notice("Укажи корректную ставку","bad");
     if(!spend(bet))return;
+
     const mode="classic";
     const deck=bjDeck();
-    bj={active:true,bet,player:[deck.pop(),deck.pop()],dealer:[deck.pop(),deck.pop()],hidden:true,mode,doubled:false,finished:false,deck};
-    registerGame();renderBlackjack(true);
+    bj={
+        active:true,
+        finished:false,
+        bet,
+        player:[deck.pop(),deck.pop()],
+        dealer:[deck.pop(),deck.pop()],
+        hidden:true,
+        mode,
+        doubled:false,
+        deck
+    };
+
+    registerGame();
+    renderBlackjack(true);
+
+    // Natural blackjack: immediate settlement.
     if(handValue(bj.player)===21){
         setTimeout(()=>{
-            bj.hidden=false;renderBlackjack(true);
+            if(!bj.active || bj.finished)return;
+            bj.hidden=false;
+            renderBlackjack(true);
             const dealerBJ=handValue(bj.dealer)===21;
-            const payout=dealerBJ?bj.bet:Math.floor(bj.bet*2.5);
-            if(payout>0){addBalance(payout);if(payout>bj.bet)registerWin(payout);}
-            track("blackjack",{win:payout>bj.bet,amount:payout,mode:bj.mode,blackjack:true});
-            if(dealerBJ)notice("У обоих blackjack — возврат ставки");else showWin(payout,"BLACKJACK +"+money(payout));
+            const payout=dealerBJ ? bj.bet : Math.floor(bj.bet*2.5);
+            if(payout>0){
+                addBalance(payout);
+                if(payout>bj.bet)registerWin(payout);
+            }
+            track("blackjack",{win:payout>bj.bet,amount:payout,mode:"classic",blackjack:true});
+            if(dealerBJ)notice("У обоих blackjack — возврат ставки");
+            else showWin(payout,"BLACKJACK +"+money(payout));
             endBlackjack();
         },650);
     }
@@ -3240,6 +3748,8 @@ function finishBlackjack(){
 }
 
 function endBlackjack(){
+    // Logical round ends NOW. This is the important part:
+    // a new click must never see bj.active=true after the result is settled.
     bj.active=false;
     bj.finished=true;
 
@@ -3252,23 +3762,8 @@ function endBlackjack(){
 
     clearTimeout(window.__bjLocalRestartTimer);
     window.__bjLocalRestartTimer=setTimeout(()=>{
-        bj={
-            active:false,
-            bet:0,
-            player:[],
-            dealer:[],
-            hidden:true,
-            mode:"classic",
-            doubled:false,
-            finished:false,
-            deck:[]
-        };
-        renderBlackjack(false);
-        $("#dealerHand").innerHTML="";
-        $("#playerHand").innerHTML="";
-        $("#dealerScore").textContent="?";
-        $("#playerScore").textContent="0";
-    },900);
+        resetBlackjackState();
+    },700);
 }
 
 if($("#bjMode"))$("#bjMode").addEventListener("change",syncBjModeInfo);
@@ -3333,37 +3828,18 @@ function bjOnlineRender(room){
 function bjOnlineStopListener(){if(bjOnline.ref&&bjOnline.listener)bjOnline.ref.off("value",bjOnline.listener);bjOnline.ref=null;bjOnline.listener=null;}
 function bjOnlineResetUi(){
     bjOnlineStopListener();
-
-    clearTimeout(bjOnline.restartTimer);
-    bjOnline.restartTimer=null;
-
-    bjOnline.roomId=null;
-    bjOnline.role=null;
-    bjOnline.ref=null;
-    bjOnline.bet=0;
-    bjOnline.mode="classic";
-    bjOnline.busy=false;
-    bjOnline.settled=false;
-    bjOnline.queueId=null;
-
+    clearTimeout(bjOnline.restartTimer);bjOnline.restartTimer=null;
+    bjOnline.roomId=null;bjOnline.role=null;bjOnline.bet=0;bjOnline.mode="classic";bjOnline.busy=false;bjOnline.settled=false;bjOnline.queueId=null;
     $("#bjOnlineRoom").textContent="Нет комнаты";
-    $("#bjOnlineStatus").textContent="ОНЛАЙН-БЛЭКДЖЕК";
     $("#bjOnlineWait").style.display="block";
     $("#bjOnlineWait").textContent="Готово к новой игре";
     $("#bjOnlineDuel").style.display="none";
     $("#bjOnlineActions").style.display="none";
     $("#bjOnlineAgain").style.display="none";
-
     $("#bjOnlineHit").style.display="inline-flex";
     $("#bjOnlineStand").style.display="inline-flex";
     $("#bjOnlineDouble").style.display="inline-flex";
     $("#bjOnlineSurrender").style.display="none";
-
-    $("#bjOnlineHit").disabled=true;
-    $("#bjOnlineStand").disabled=true;
-    $("#bjOnlineDouble").disabled=true;
-    $("#bjOnlineSurrender").disabled=true;
-
     $("#bjFindBtn").disabled=false;
     $("#bjCancelBtn").disabled=true;
 }
@@ -3374,25 +3850,13 @@ function bjOnlineListen(roomId){
         const room=snap.val();
         if(!room){bjOnlineResetUi();notice("Комната закрыта","bad");return;}
         bjOnlineRender(room);
-        if(room.status==="finished"){
-            clearTimeout(bjOnline.restartTimer);
-            bjOnline.restartTimer=setTimeout(()=>{
-                if(bjOnline.roomId===roomId) bjOnlineResetUi();
-            },900);
-        }
         // Только владелец очереди удаляет свою запись. Это устраняет PERMISSION_DENIED на телефоне.
         if(room.status==="playing"&&bjOnline.role==="host"&&bjOnline.queueId){try{await bjOnlineQueueRef(bjOnline.queueId).remove();}catch(e){console.warn("queue cleanup",e);}}
         if(room.status==="finished"&&!bjOnline.settled){
             bjOnline.settled=true;
             const uid=bjOnlineUid();
-            const myWager=Number(room.wagers&&room.wagers[uid]||room.bet||0);
-            const totalPot=Object.values(room.wagers||{}).reduce((s,v)=>s+Number(v||0),0)||Number(room.bet||0)*2;
-            if(room.winner===uid){
-                addBalance(totalPot);
-                registerWin(totalPot);
-            }else if(room.winner==="draw"){
-                addBalance(myWager);
-            }
+            if(room.winner===uid){addBalance(Number(room.bet||0)*2);registerWin(Number(room.bet||0)*2);}
+            else if(room.winner==="draw"){addBalance(Number(room.bet||0));}
             saveState();
 
             // После завершения матч больше не должен блокировать кнопку
@@ -3405,28 +3869,29 @@ function bjOnlineListen(roomId){
     bjOnline.ref.on("value",bjOnline.listener);
 }
 
-function bjOnlineValidateMode(){
-    return "classic";
-}
-
-async function bjOnlinePlayAgain(){
-    // Never allow a finished room to keep the client locked.
-    bjOnlineResetUi();
-    await new Promise(r=>setTimeout(r,50));
-    return bjOnlineFind();
-}
+function bjOnlineValidateMode(){ return "classic"; }
 
 async function bjOnlineFind(){
     const uid=bjOnlineUid();
     if(!firebaseReady||!db||!uid)return notice("Для онлайн-игры войди в аккаунт","bad");
     if(bjOnline.roomId){
         try{
-            const current=await bjOnlineRoomRef(bjOnline.roomId).once("value");
-            const currentRoom=current.val();
-            if(!currentRoom || currentRoom.status==="finished"){
+            const oldRef=bjOnlineRoomRef(bjOnline.roomId);
+            const oldSnap=await oldRef.once("value");
+            const oldRoom=oldSnap.val();
+
+            if(!oldRoom || oldRoom.status==="finished"){
+                // Finished/dead room: remove only our own queue entry and fully reset.
+                const uid2=bjOnlineUid();
+                if(uid2)await bjOnlineQueueRef(uid2).remove().catch(()=>{});
                 bjOnlineResetUi();
+            }else if(oldRoom.status==="waiting" && oldRoom.host===uid){
+                // We are still legitimately waiting.
+                return notice("Ты уже ищешь соперника","bad");
+            }else if(oldRoom.status==="playing"){
+                return notice("Сначала закончи текущую игру","bad");
             }else{
-                return notice("Ты уже находишься в комнате","bad");
+                bjOnlineResetUi();
             }
         }catch(e){
             bjOnlineResetUi();
@@ -3462,7 +3927,7 @@ async function bjOnlineFind(){
             const p2=uid;
             const a={uid:p1,name:room.players?.[p1]?.name||candidate.q.name||"Игрок",cards:[deck[0],deck[2]],done:false,bust:false};
             const b={uid:p2,name:bjOnlineName(),cards:[deck[1],deck[3]],done:false,bust:false};
-            await roomRef.update({status:"playing",playerIds:[p1,p2],players:{[p1]:a,[p2]:b},turn:p1,deck,mode,bet,startedAt:firebase.database.ServerValue.TIMESTAMP,doubled:{},wagers:{[p1]:Number(bet),[p2]:Number(bet)}});
+            await roomRef.update({status:"playing",playerIds:[p1,p2],players:{[p1]:a,[p2]:b},turn:p1,deck,mode,bet,startedAt:firebase.database.ServerValue.TIMESTAMP,doubled:{}});
             bjOnline={...bjOnline,roomId:candidate.q.roomId,role:"guest",bet,mode,queueId:null,busy:false,settled:false};
             bjOnlineListen(bjOnline.roomId);
             reserved=false;
@@ -3473,7 +3938,7 @@ async function bjOnlineFind(){
         const roomId="bj_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
         const deck=bjDeck();
         const roomRef=roomsRef.child(roomId);
-        await roomRef.set({status:"waiting",host:uid,playerIds:[uid],bet,mode,deck,players:{[uid]:{uid,name:bjOnlineName(),cards:[],done:false,bust:false}},createdAt:firebase.database.ServerValue.TIMESTAMP,wagers:{[uid]:Number(bet)},doubled:{}});
+        await roomRef.set({status:"waiting",host:uid,playerIds:[uid],bet,mode,deck,players:{[uid]:{uid,name:bjOnlineName(),cards:[],done:false,bust:false}},createdAt:firebase.database.ServerValue.TIMESTAMP});
         await queueRef.child(uid).set({uid,roomId,bet,mode,name:bjOnlineName(),createdAt:firebase.database.ServerValue.TIMESTAMP});
         bjOnline={...bjOnline,roomId,role:"host",bet,mode,queueId:uid,busy:false,settled:false};
         bjOnlineListen(roomId);reserved=false;
@@ -3509,15 +3974,15 @@ async function bjOnlineAction(action){
         if(!room||room.status!=="playing")return;
         const me=room.players&&room.players[uid];
         if(!me||me.done||room.turn!==uid)return;
-        const rules=bjRules("classic"),cards=Array.isArray(me.cards)?me.cards.slice():[],deck=Array.isArray(room.deck)?room.deck.slice():[];
+        const rules=bjRules(room.mode||bjOnline.mode),cards=Array.isArray(me.cards)?me.cards.slice():[],deck=Array.isArray(room.deck)?room.deck.slice():[];
         const doubled=room.doubled||{};
         const update={};
         if(action==="double"){
             if(cards.length!==2||doubled[uid])return;
             if(!spend(Number(room.bet||0)))return;
             const next=deck.shift();if(!next)return;
-            cards.push(next);update["players/"+uid+"/cards"]=cards;update["players/"+uid+"/done"]=true;update["players/"+uid+"/bust"]=handValue(cards)>21;update["doubled/"+uid]=true;update["wagers/"+uid]=Number(room.bet||0)*2;update.deck=deck;
-        }else if(action==="surrender"){ return;
+            cards.push(next);update["players/"+uid+"/cards"]=cards;update["players/"+uid+"/done"]=true;update["players/"+uid+"/bust"]=handValue(cards)>21;update["doubled/"+uid]=true;update.deck=deck;
+        }else if(action==="surrender"){
             if(cards.length!==2||doubled[uid])return;
             update["players/"+uid+"/done"]=true;update["players/"+uid+"/surrender"]=true;update["players/"+uid+"/bust"]=false;
         }else if(action==="hit"){
@@ -3548,7 +4013,11 @@ async function bjOnlineAction(action){
 function bjOnlineHit(){bjOnlineAction("hit");}
 function bjOnlineDouble(){bjOnlineAction("double");}
 function bjOnlineStand(){bjOnlineAction("stand");}
-function bjOnlineSurrender(){ return; }
+function bjOnlineSurrender(){bjOnlineAction("surrender");}
+
+window.addEventListener("beforeunload",()=>{
+    if(bjOnline.queueId&&db){try{bjOnlineQueueRef(bjOnline.queueId).remove();}catch(_){} }
+});
 
 /* =========================================================
    CRASH
@@ -5240,7 +5709,16 @@ html, body { overscroll-behavior-x: none; }
   const oldRegisterGame=window.registerGame;
   if(oldRegisterGame&&!oldRegisterGame.__boomWrapped){window.registerGame=function(){oldRegisterGame.apply(this,arguments);awardXP(10)};window.registerGame.__boomWrapped=true}
   const oldRegisterWin=window.registerWin;
-  if(oldRegisterWin&&!oldRegisterWin.__boomWrapped){window.registerWin=function(amount){oldRegisterWin.apply(this,arguments);awardXP(Math.max(5,Math.min(50,Math.floor(Number(amount||0)/10000)+10)));publishLiveWin(amount,state.lastGame||'slots')};window.registerWin.__boomWrapped=true}
+  if(oldRegisterWin&&!oldRegisterWin.__boomWrapped){
+    window.registerWin=function(amount){
+      oldRegisterWin.apply(this,arguments);
+      const gameId=state.lastGame||'slots';
+      awardXP(Math.max(5,Math.min(50,Math.floor(Number(amount||0)/10000)+10)));
+      publishLiveWin(amount,gameId);
+      if(typeof window.__addLiveWinLocal==='function') window.__addLiveWinLocal(amount,games[gameId]||'Игра');
+    };
+    window.registerWin.__boomWrapped=true;
+  }
 
   function publishLiveWin(amount, gameId){
     if(!firebaseReady || !authUser || !liveWinsRef || Number(amount||0)<=0) return;
@@ -5334,6 +5812,30 @@ html, body { overscroll-behavior-x: none; }
     },{rootMargin:'300px 0px'});
     document.querySelectorAll('.game-card, .boom-widget, .stat-card').forEach(el=>io.observe(el));
   }
+})();
+</script>
+
+<script id="live-wins-universal-runtime">
+(()=>{
+  const qx=s=>document.querySelector(s);
+  const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const moneyLive=v=>typeof money2==='function'?money2(v):Number(v||0).toLocaleString('ru-RU');
+
+  // Локальный показ — для самого игрока. Публикация в Firebase выполняется
+  // через общий registerWin, поэтому это работает для всех игр сайта.
+  function addLiveWinLocal(amount,game='Игра') {
+    const track=qx('#boomLiveTrack');
+    if(!track||!Number(amount||0))return;
+    const name=typeof authUser!=='undefined'&&authUser
+      ? String(authUser.displayName||authUser.email?.split('@')[0]||'Игрок')
+      : 'Игрок';
+    const item=document.createElement('span');
+    item.className='live-win-item';
+    item.innerHTML=`${esc(name.slice(0,24))} · <b class="boom-green">+${esc(moneyLive(amount))}</b> · ${esc(game)}`;
+    track.appendChild(item);
+    while(track.children.length>40)track.removeChild(track.firstChild);
+  }
+  window.__addLiveWinLocal=addLiveWinLocal;
 })();
 </script>
 </body>
