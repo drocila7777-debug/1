@@ -3251,13 +3251,24 @@ function endBlackjack(){
     bj.active=false;bj.finished=true;
     $("#hitBtn").disabled=true;$("#standBtn").disabled=true;$("#doubleBtn").disabled=true;$("#surrenderBtn").disabled=true;
     saveState();
+
+    // Полный локальный рестарт состояния после показа результата.
+    // Сам интерфейс остаётся на экране результата, но следующая игра
+    // всегда начинается с чистого состояния и не получает старую руку.
+    clearTimeout(window.__bjLocalRestartTimer);
+    window.__bjLocalRestartTimer=setTimeout(()=>{
+        bj={active:false,bet:0,player:[],dealer:[],hidden:true,mode:$("#bjMode")?.value||"classic",doubled:false,finished:false,deck:[]};
+        renderBlackjack(false);
+        if($("#dealerScore"))$("#dealerScore").textContent="0";
+        if($("#playerScore"))$("#playerScore").textContent="0";
+    },1800);
 }
 
 if($("#bjMode"))$("#bjMode").addEventListener("change",syncBjModeInfo);
 syncBjModeInfo();
 
 /* ---------------- ONLINE V2 ---------------- */
-let bjOnline={roomId:null,role:null,ref:null,listener:null,bet:0,mode:"classic",busy:false,settled:false,queueId:null};
+let bjOnline={roomId:null,role:null,ref:null,bet:0,mode:"classic",busy:false,settled:false,queueId:null,restartTimer:null};
 
 function bjOnlineUid(){return myFirebaseUid||(authUser&&authUser.uid)||null;}
 function bjOnlineName(){return (state.username||"Игрок").trim().slice(0,24)||"Игрок";}
@@ -3313,7 +3324,23 @@ function bjOnlineRender(room){
 }
 
 function bjOnlineStopListener(){if(bjOnline.ref&&bjOnline.listener)bjOnline.ref.off("value",bjOnline.listener);bjOnline.ref=null;bjOnline.listener=null;}
-function bjOnlineResetUi(){bjOnlineStopListener();bjOnline.roomId=null;bjOnline.role=null;bjOnline.bet=0;bjOnline.mode="classic";bjOnline.busy=false;bjOnline.settled=false;bjOnline.queueId=null;$("#bjOnlineRoom").textContent="Нет комнаты";$("#bjOnlineWait").style.display="block";$("#bjOnlineDuel").style.display="none";$("#bjOnlineActions").style.display="none";$("#bjFindBtn").disabled=false;$("#bjCancelBtn").disabled=true;}
+function bjOnlineResetUi(){
+    bjOnlineStopListener();
+    clearTimeout(bjOnline.restartTimer);bjOnline.restartTimer=null;
+    bjOnline.roomId=null;bjOnline.role=null;bjOnline.bet=0;bjOnline.mode="classic";bjOnline.busy=false;bjOnline.settled=false;bjOnline.queueId=null;
+    $("#bjOnlineRoom").textContent="Нет комнаты";
+    $("#bjOnlineWait").style.display="block";
+    $("#bjOnlineWait").textContent="Готово к новой игре";
+    $("#bjOnlineDuel").style.display="none";
+    $("#bjOnlineActions").style.display="none";
+    $("#bjOnlineAgain").style.display="none";
+    $("#bjOnlineHit").style.display="inline-flex";
+    $("#bjOnlineStand").style.display="inline-flex";
+    $("#bjOnlineDouble").style.display="inline-flex";
+    $("#bjOnlineSurrender").style.display="inline-flex";
+    $("#bjFindBtn").disabled=false;
+    $("#bjCancelBtn").disabled=true;
+}
 
 function bjOnlineListen(roomId){
     bjOnlineStopListener();bjOnline.ref=bjOnlineRoomRef(roomId);
@@ -3329,6 +3356,14 @@ function bjOnlineListen(roomId){
             if(room.winner===uid){addBalance(Number(room.bet||0)*2);registerWin(Number(room.bet||0)*2);}
             else if(room.winner==="draw"){addBalance(Number(room.bet||0));}
             saveState();
+
+            // После завершения матч больше не должен блокировать кнопку
+            // «Найти соперника». Оставляем результат на экране на короткое время,
+            // затем полностью освобождаем локальное состояние комнаты.
+            clearTimeout(bjOnline.restartTimer);
+            bjOnline.restartTimer=setTimeout(()=>{
+                if(bjOnline.roomId===roomId) bjOnlineResetUi();
+            },2200);
         }
     };
     bjOnline.ref.on("value",bjOnline.listener);
