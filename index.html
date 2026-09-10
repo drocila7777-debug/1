@@ -2326,34 +2326,6 @@ select option{background:#101014;color:#fff}
 @media(max-width:600px){#blackjack .bj-result{font-size:10px}.bj-hand-label{font-size:9px!important}}
 </style>
 
-<meta http-equiv="X-Content-Type-Options" content="nosniff">
-<meta name="referrer" content="strict-origin-when-cross-origin">
-<style id="code-review-hardening">
-/* Production-oriented hardening for the current single-file demo. */
-html{overflow-x:hidden}body{overscroll-behavior-x:none}
-button,.btn{touch-action:manipulation}
-:focus-visible{outline:2px solid #caff00;outline-offset:3px}
-.card,.mine-cell,.game-card{contain:layout paint style}
-@media(prefers-reduced-motion:reduce){.boom-live-track{animation:none!important}}
-</style>
-<style id="profile-stats-white-fix">
-/* Profile statistics: force readable white text */
-#profile .profile-stat,
-#profile .profile-stat *,
-#profile .stats,
-#profile .stats *,
-#profile [class*="stat"],
-#profile [class*="stat"] * {
-  color: #fff !important;
-  -webkit-text-fill-color: #fff !important;
-}
-#profile .profile-stat .muted,
-#profile .stats .muted,
-#profile [class*="stat"] .muted {
-  color: rgba(255,255,255,.72) !important;
-  -webkit-text-fill-color: rgba(255,255,255,.72) !important;
-}
-</style>
 </head>
 <body>
 <div class="brand-line"></div>
@@ -2889,7 +2861,7 @@ button,.btn{touch-action:manipulation}
   </div>
 </div>
 
-<div class="notice" id="notice"></div><div id="demoSecurityNotice" role="status" style="position:fixed;bottom:12px;left:12px;z-index:9999;max-width:420px;padding:9px 12px;background:#111;border:1px solid rgba(202,255,0,.22);color:#aaa;font:600 10px/1.35 Arial;opacity:.86">ДЕМО-РЕЖИМ: монеты виртуальные. Для реальных ставок нужен server-authoritative backend.</div>
+<div class="notice" id="notice"></div>
 <div class="win-overlay" id="winOverlay"><div class="win-text" id="winText">+0 </div></div>
 <style>
 :root{--ease-out:cubic-bezier(.16,1,.3,1);--ease-spring:cubic-bezier(.2,.9,.2,1.25)}
@@ -2979,9 +2951,6 @@ const firebaseConfig={
 let db=null,playersRef=null,usersRef=null,storage=null,liveWinsRef=null,firebaseReady=false,globalPlayers=[],myFirebaseUid=null;
 let cloudStateUnsubscribe=null;
 let authUser=null,authReady=false,cloudSyncTimer=null,authMode="login";
-let cloudWriteSeq=0;
-let cloudWriteInFlight=false;
-let cloudDirty=false;
 
 function mergeState(saved){
     if(!saved)return cloneDefault();
@@ -3046,11 +3015,8 @@ function renderAuthStatus(){
     if(!el)return;
     if(authUser){
         const name=authUser.displayName||authUser.email||"Аккаунт";
-        el.textContent='';
-        const dot=document.createElement('span');dot.className='auth-dot';
-        const user=document.createElement('span');user.className='auth-user';user.title=String(authUser.email||'');user.textContent=String(name);
-        const btn=document.createElement('button');btn.className='auth-btn';btn.type='button';btn.textContent='ВЫЙТИ';btn.addEventListener('click',logout);
-        el.append(dot,user,btn);
+        el.innerHTML='<span class="auth-dot"></span><span class="auth-user" title="'+String(authUser.email||"")+'">'+String(name)+'</span>'
+            +'<button class="auth-btn" onclick="logout()">ВЫЙТИ</button>';
     }else{
         el.innerHTML='<button class="auth-btn" onclick="openAuth()">ВОЙТИ</button>';
     }
@@ -3170,26 +3136,21 @@ async function loadCloudState(isNewAccount){
 
 async function saveState(forceCloud=false){
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-    if(!firebaseReady||!authUser||!usersRef)return;
-    cloudDirty=true;
-    const seq=++cloudWriteSeq;
-    clearTimeout(cloudSyncTimer);
-    const write=async()=>{
-        if(cloudWriteInFlight){cloudSyncTimer=setTimeout(write,80);return;}
-        cloudWriteInFlight=true;
-        const snapshot=JSON.parse(JSON.stringify(state));
-        try{
-            // The current app is a virtual-coin demo. Keep cloud sync deterministic and serialized.
-            await usersRef.child(authUser.uid).child('state').set(snapshot);
-            await publishPlayerData(true);
-            if(seq===cloudWriteSeq)cloudDirty=false;
-        }catch(e){
-            console.error('Cloud save error',e);
-            if(e&&e.code==='PERMISSION_DENIED')notice('Облако: нет доступа к сохранению. Проверь правила Firebase Database.','bad');
-            else if(e&&e.code==='NETWORK_ERROR')notice('Облако: ошибка сети. Проверь интернет.','bad');
-        }finally{cloudWriteInFlight=false;}
-    };
-    if(forceCloud)await write();else cloudSyncTimer=setTimeout(write,180);
+    if(firebaseReady&&authUser&&usersRef){
+        clearTimeout(cloudSyncTimer);
+        const write=async()=>{
+            try{
+                await usersRef.child(authUser.uid).child("state").set(state);
+                await publishPlayerData(true);
+            }catch(e){
+                console.error("Cloud save error",e);
+                if(e&&e.code==="PERMISSION_DENIED") notice("Облако: нет доступа к сохранению. Проверь правила Firebase Database.","bad");
+                else if(e&&e.code==="NETWORK_ERROR") notice("Облако: ошибка сети. Проверь интернет.","bad");
+            }
+        };
+        if(forceCloud)await write();
+        else cloudSyncTimer=setTimeout(write,120);
+    }
 }
 
 function refreshAfterCloudChange(){
@@ -3209,7 +3170,7 @@ function startRealtimeCloudSync(){
     let first=true;
     const handler=snap=>{
         const cloud=snap.val();
-        if(cloud && !cloudDirty && !cloudWriteInFlight){
+        if(cloud){
             state=mergeState(cloud);
             localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
             if(!first) refreshAfterCloudChange();
@@ -3502,41 +3463,213 @@ function animateBalance(target){
     box.classList.add("flash");
 }
 
-const ECONOMY_LIMITS={maxWin:1000000000,maxBet:100000000,maxBalance:100000000000};
-let __payoutLedger=new Set();
-function normalizeMoneyAmount(value){
-    const n=Number(value);
-    if(!Number.isFinite(n)||!Number.isSafeInteger(Math.round(n))) return null;
-    const v=Math.round(n);
-    if(v<0||v>ECONOMY_LIMITS.maxWin) return null;
-    return v;
-}
 function addBalance(amount){
-    const v=normalizeMoneyAmount(Math.abs(Number(amount)));
-    if(v===null||Number(amount)<0){notice('Некорректная сумма','bad');return false;}
-    state.balance=Math.min(ECONOMY_LIMITS.maxBalance,Math.max(0,Math.round(state.balance)+v));
-    saveState(); animateBalance(state.balance); broadcastMyUpdate();
-    if(v>0){tone(700,.08);setTimeout(()=>tone(950,.1),80);}
-    return true;
+    state.balance+=amount;
+    saveState();
+    animateBalance(state.balance);
+    broadcastMyUpdate();
+    if(amount>0){
+        tone(700,.08);
+        setTimeout(()=>tone(950,.1),80);
+    }
 }
+
 function spend(amount){
     amount=Math.floor(Number(amount));
-    if(!Number.isSafeInteger(amount)||amount<=0||amount>ECONOMY_LIMITS.maxBet){notice('Некорректная ставка','bad');return false;}
-    if(amount>state.balance){notice('Недостаточно монет','bad');return false;}
-    state.balance-=amount; state.maxBet=Math.max(state.maxBet||0,amount);
-    saveState(); animateBalance(state.balance); broadcastMyUpdate(); tone(170,.08,'sawtooth'); return true;
+    if(!Number.isFinite(amount)||amount<=0){
+        notice("Некорректная ставка","bad");
+        return false;
+    }
+    if(amount>state.balance){
+        notice("Недостаточно монет","bad");
+        return false;
+    }
+    state.balance-=amount;
+    state.maxBet=Math.max(state.maxBet||0,amount);
+    saveState();
+    animateBalance(state.balance);
+    broadcastMyUpdate();
+    tone(170,.08,"sawtooth");
+    return true;
 }
+
+/* Статистика */
 function registerGame(){state.stats.games++;saveState();renderLevel();}
-function registerWin(amount,meta={}){
-    const v=normalizeMoneyAmount(amount);
-    if(v===null||v<=0)return false;
-    const roundId=String(meta.roundId||state.__activeRoundId||'');
-    const ledgerKey=roundId?`${roundId}:${v}`:'';
-    if(ledgerKey && __payoutLedger.has(ledgerKey)) return false;
-    if(ledgerKey) __payoutLedger.add(ledgerKey);
-    state.stats.wins++; state.stats.maxWin=Math.max(state.stats.maxWin,v);
-    state.history.unshift({time:new Date().toLocaleString('ru-RU'),amount:v}); state.history=state.history.slice(0,10);
-    saveState(); renderProfile(); return true;
+
+function registerWin(amount){
+    state.stats.wins++;
+    if(amount>state.stats.maxWin)state.stats.maxWin=amount;
+    state.history.unshift({time:new Date().toLocaleString("ru-RU"),amount:Math.round(amount)});
+    state.history=state.history.slice(0,10);
+    saveState();
+    renderProfile();
+}
+
+/* =========================================================
+   УВЕДОМЛЕНИЯ / ПОБЕДА
+========================================================= */
+let noticeTimer;
+function notice(text,type=""){
+    const el=$("#notice");
+    el.textContent=text;
+    el.className="notice show "+type;
+    clearTimeout(noticeTimer);
+    noticeTimer=setTimeout(()=>el.classList.remove("show"),2400);
+}
+
+function showWin(amount,text){
+    const overlay=$("#winOverlay");
+    $("#winText").textContent=text||("+"+money(amount)+" ");
+    overlay.classList.remove("show");
+    void overlay.offsetWidth;
+    overlay.classList.add("show");
+    confetti();
+    tone(800,.1);
+    setTimeout(()=>tone(1100,.11),90);
+    setTimeout(()=>tone(1400,.14),190);
+}
+
+function confetti(){
+    for(let i=0;i<42;i++){
+        const item=document.createElement("div");
+        item.className="confetti";
+        item.style.left=Math.random()*100+"vw";
+        item.style.background=["#FF6B00","#111111","#6E6E6E","#FF8A3D","#1F9D63"][randInt(0,4)];
+        item.style.setProperty("--x",(Math.random()*320-160)+"px");
+        item.style.setProperty("--r",(Math.random()*1000-500)+"deg");
+        item.style.animationDuration=(1+Math.random()*1.5)+"s";
+        document.body.appendChild(item);
+        setTimeout(()=>item.remove(),2800);
+    }
+}
+
+/* =========================================================
+   НАВИГАЦИЯ
+========================================================= */
+let currentGame=null;
+
+function openSection(id){
+    if(id==="games"){
+        closeGames(false);
+        $("#gameSelector").scrollIntoView({behavior:"smooth",block:"start"});
+        updateMobileNav("games");
+        return;
+    }
+
+    const protectedGames = ["slots","crash","blackjack","mines","dice","reaction","wheel"];
+    if(protectedGames.includes(id) && !authUser){
+        openAuth("register");
+        notice("Сначала зарегистрируйся или войди в аккаунт","bad");
+        return;
+    }
+
+    closeGames(false);
+    const game=document.getElementById(id);
+    if(!game)return;
+    game.classList.add("active");
+    currentGame=id;
+    setTimeout(()=>{
+        game.scrollIntoView({behavior:"smooth",block:"start"});
+        if(id==="crash")setTimeout(resizeCrashCanvas,150);
+    },30);
+    if(id==="bonuses"){renderBonuses();renderQuests();}
+    if(id==="profile")renderProfile();
+    if(id==="leaders")renderLeaders();
+    updateMobileNav(id);
+}
+
+function closeGames(scroll=true){
+    document.querySelectorAll(".game").forEach(g=>g.classList.remove("active"));
+    currentGame=null;
+    if(scroll)$("#gameSelector").scrollIntoView({behavior:"smooth",block:"start"});
+    updateMobileNav("games");
+}
+
+function filterGames(category,button){
+    document.querySelectorAll(".category").forEach(x=>x.classList.remove("active"));
+    button.classList.add("active");
+    document.querySelectorAll(".game-card").forEach(card=>{
+        const cats=card.dataset.categories.split(" ");
+        const show=category==="all"||cats.includes(category);
+        card.style.display=show?"":"none";
+        if(show){
+            card.style.animation="none";
+            void card.offsetWidth;
+            card.style.animation="";
+        }
+    });
+}
+
+function goMobile(section){
+    if(section==="games"){
+        closeGames(false);
+        $("#gameSelector").scrollIntoView({behavior:"smooth",block:"start"});
+        updateMobileNav("games");
+        return;
+    }
+    openSection(section);
+}
+
+function updateMobileNav(id){
+    const map={games:"mobileGames",bonuses:"mobileBonus",profile:"mobileProfile"};
+    Object.values(map).forEach(b=>document.getElementById(b).classList.remove("active"));
+    if(map[id])document.getElementById(map[id]).classList.add("active");
+}
+
+/* Ripple */
+document.addEventListener("click",event=>{
+    const button=event.target.closest(".btn,.play,.category,.bet-btn,.header-btn,.game-close,.mine-cell");
+    if(!button)return;
+    const rect=button.getBoundingClientRect();
+    const ripple=document.createElement("span");
+    ripple.className="ripple";
+    const size=Math.max(rect.width,rect.height);
+    ripple.style.width=size+"px";
+    ripple.style.height=size+"px";
+    ripple.style.left=event.clientX-rect.left-size/2+"px";
+    ripple.style.top=event.clientY-rect.top-size/2+"px";
+    button.appendChild(ripple);
+    setTimeout(()=>ripple.remove(),600);
+});
+
+/* =========================================================
+   ТРЕКИНГ СОБЫТИЙ
+========================================================= */
+function track(game,data){
+    data=data||{};
+
+    const gs=state.gameStats[game]=state.gameStats[game]||{played:0,wins:0,maxWin:0,extra:{}};
+    gs.played++;
+    if(data.win){
+        gs.wins++;
+        gs.maxWin=Math.max(gs.maxWin,Math.round(data.amount||0));
+    }
+    if(data.extra){
+        Object.keys(data.extra).forEach(k=>{
+            const v=data.extra[k];
+            if(typeof v==="number")gs.extra[k]=Math.max(gs.extra[k]||0,v);
+            else gs.extra[k]=v;
+        });
+    }
+    if(game==="reaction"&&data.ms){
+        state.bestReaction=Math.min(state.bestReaction||9999,data.ms);
+    }
+
+    state.dailyWin=state.dailyWin||{date:todayKey(),amount:0};
+    if(state.dailyWin.date!==todayKey())state.dailyWin={date:todayKey(),amount:0};
+    if(data.win)state.dailyWin.amount+=Math.round(data.amount||0);
+
+    const q=questState();
+    if(game==="slots")q.slots++;
+    if(game==="crash")q.crash++;
+    if(game==="blackjack"&&data.win)q.bjw++;
+    if(game==="mines"&&data.win)q.minesAmt+=Math.round(data.amount||0);
+
+    saveState();
+    checkAchievements();
+
+    if(currentGame==="bonuses")renderQuests();
+    if(currentGame==="profile"){renderGameStats();renderLevel();}
 }
 
 /* =========================================================
@@ -3770,6 +3903,58 @@ function spinSlots(){
 const suits=["♠","♥","♦","♣"];
 const ranks=[["A",11],["2",2],["3",3],["4",4],["5",5],["6",6],["7",7],["8",8],["9",9],["10",10],["J",10],["Q",10],["K",10]];
 
+function bjRules(mode){
+    return {
+        classic:{double:true,surrender:true,five:false,bonus:0,label:"дилер стоит на 17 · удвоение на первых 2 картах"},
+        turbo:{double:true,surrender:true,five:false,bonus:0,label:"удвоение на первых 2 картах · быстрый матч"},
+        five:{double:true,surrender:true,five:true,bonus:1.5,label:"5 карт без перебора = выплата 2.5× ставки"}
+    }[mode] || {double:true,surrender:true,five:false,bonus:0,label:"дилер стоит на 17"};
+}
+
+function bjModeLabel(mode){
+    return ({classic:"Классика",turbo:"Турбо",five:"5 карт — бонус"}[mode]||"Классика");
+}
+
+function syncBjModeInfo(){
+    const mode="classic";
+    if($("#bjModeInfo"))$("#bjModeInfo").textContent=bjRules(mode).label;
+}
+
+function createCard(){
+    const data=ranks[randInt(0,ranks.length-1)];
+    return {rank:data[0],value:data[1],suit:suits[randInt(0,suits.length-1)]};
+}
+
+function bjDeck(){
+    const deck=[];
+    for(let d=0;d<2;d++)for(const suit of suits)for(const [rank,value] of ranks)deck.push({rank,value,suit});
+    for(let i=deck.length-1;i>0;i--){const j=randInt(0,i);[deck[i],deck[j]]=[deck[j],deck[i]];}
+    return deck;
+}
+
+function handValue(hand){
+    let value=0,aces=0;
+    (hand||[]).forEach(c=>{ value+=Number(c.value)||0; if(c.rank==="A")aces++; });
+    while(value>21&&aces>0){value-=10;aces--;}
+    return value;
+}
+
+function isSoftHand(hand){
+    let raw=(hand||[]).reduce((s,c)=>s+(Number(c.value)||0),0);
+    return (hand||[]).some(c=>c.rank==="A") && raw!==handValue(hand);
+}
+
+function bjCardKey(c){return c ? `${c.rank}|${c.suit}|${c.value}` : "";}
+
+function createCardElement(card,hidden=false){
+    const el=document.createElement("div");
+    el.className="card deal";
+    if(hidden){el.classList.add("back");el.textContent="";return el;}
+    if(card.suit==="♥"||card.suit==="♦")el.classList.add("red");
+    el.innerHTML="<div>"+card.rank+"</div><div style=\"font-size:27px;align-self:center\">"+card.suit+"</div>";
+    return el;
+}
+
 /* ---------------- LOCAL BLACKJACK — CASINO RULESET ---------------- */
 let bj={active:false,bet:0,dealer:[],hidden:true,mode:"classic",finished:false,deck:[],hands:[],activeHand:0,insurance:0,insuranceOffered:false,insuranceResolved:false,surrendered:false};
 
@@ -3805,19 +3990,7 @@ function handValue(hand){let value=0,aces=0;(hand||[]).forEach(c=>{value+=Number
 function isSoftHand(hand){let raw=(hand||[]).reduce((s,c)=>s+(Number(c.value)||0),0);return (hand||[]).some(c=>c.rank==='A')&&raw!==handValue(hand);}
 function isNatural(hand){return Array.isArray(hand)&&hand.length===2&&handValue(hand)===21;}
 function sameSplitValue(a,b){return a&&b&&(a.rank===b.rank || Number(a.value)===Number(b.value));}
-function createCardElement(card,hidden=false){
-    const el=document.createElement('div');
-    el.className='card deal';
-    if(hidden){el.classList.add('back');return el;}
-    if(card.suit==='♥'||card.suit==='♦')el.classList.add('red');
-    const rank=document.createElement('div');
-    rank.textContent=String(card.rank||'');
-    const suit=document.createElement('div');
-    suit.textContent=String(card.suit||'');
-    suit.style.cssText='font-size:27px;align-self:center';
-    el.append(rank,suit);
-    return el;
-}
+function createCardElement(card,hidden=false){const el=document.createElement('div');el.className='card deal';if(hidden){el.classList.add('back');el.textContent='';return el;}if(card.suit==='♥'||card.suit==='♦')el.classList.add('red');el.innerHTML='<div>'+card.rank+'</div><div style="font-size:27px;align-self:center">'+card.suit+'</div>';return el;}
 function bjCurrentHand(){return bj.hands[bj.activeHand];}
 function bjAllHandsDone(){return bj.hands.length>0&&bj.hands.every(h=>h.done);}
 
@@ -4244,7 +4417,6 @@ function startCrash(){
 
     const point=generateCrashPoint();
     crash={
-        roundId:'crash_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
         active:true,
         cashed:false,
         bet:bet,
@@ -4443,7 +4615,7 @@ function cashoutCrash(){
 
     const payout=Math.floor(crash.bet*crash.cashoutMultiplier);
     addBalance(payout);
-    registerWin(payout,{roundId:crash.roundId,payoutId:crash.roundId+":cashout"});
+    registerWin(payout);
     track("crash",{win:true,amount:payout,extra:{best:crash.cashoutMultiplier}});
 
     $("#crashScreen").classList.add("cashed");
@@ -5892,19 +6064,23 @@ html, body { overscroll-behavior-x: none; }
       const gameId=state.lastGame||'slots';
       awardXP(Math.max(5,Math.min(50,Math.floor(Number(amount||0)/10000)+10)));
       publishLiveWin(amount,gameId);
-      if((!firebaseReady || !authUser || !liveWinsRef) && typeof window.__addLiveWinLocal==='function') window.__addLiveWinLocal(amount,games[gameId]||'Игра');
+      if(typeof window.__addLiveWinLocal==='function') window.__addLiveWinLocal(amount,games[gameId]||'Игра');
     };
     window.registerWin.__boomWrapped=true;
   }
 
   function publishLiveWin(amount, gameId){
-    const safeAmount=normalizeMoneyAmount(amount);
-    if(!firebaseReady || !authUser || !liveWinsRef || safeAmount===null || safeAmount<=0) return;
-    const gameName=games[gameId];
-    if(!gameName)return;
+    if(!firebaseReady || !authUser || !liveWinsRef || Number(amount||0)<=0) return;
+    const gameName=games[gameId]||games[state.lastGame]||"Игра";
     const name=String(authUser.displayName||state.username||authUser.email?.split("@")[0]||"Игрок").trim().slice(0,24)||"Игрок";
-    liveWinsRef.push({uid:authUser.uid,name,amount:safeAmount,game:gameName,createdAt:firebase.database.ServerValue.TIMESTAMP})
-      .catch(e=>console.warn("Live win publish error",e));
+    const safeAmount=Math.round(Number(amount||0));
+    liveWinsRef.push({
+      uid:authUser.uid,
+      name:name,
+      amount:safeAmount,
+      game:gameName,
+      createdAt:firebase.database.ServerValue.TIMESTAMP
+    }).catch(e=>console.warn("Live win publish error",e));
   }
 
   function startLiveWins(){
@@ -5916,15 +6092,9 @@ html, body { overscroll-behavior-x: none; }
     recent.on('child_added',snap=>{
       const w=snap.val()||{};
       if(!w.name || !w.amount || !w.game) return;
-      if(track.querySelector(`[data-win-id="${CSS.escape(snap.key)}"]`)) return;
       const item=document.createElement('span');
       item.dataset.winId=snap.key;
-      const name=document.createElement('span');name.textContent=String(w.name);
-      const sep1=document.createTextNode(' · ');
-      const amount=document.createElement('b');amount.className='boom-green';amount.textContent='+'+money2(w.amount);
-      const sep2=document.createTextNode(' · ');
-      const game=document.createElement('span');game.textContent=String(w.game);
-      item.append(name,sep1,amount,sep2,game);
+      item.innerHTML=`${escapeHtml(String(w.name))} · <b class="boom-green">+${money2(w.amount)}</b> · ${escapeHtml(String(w.game))}`;
       track.appendChild(item);
       while(track.children.length>30) track.removeChild(track.firstChild);
       const items=[...track.children].map(x=>x.outerHTML).join('');
@@ -6010,7 +6180,7 @@ html, body { overscroll-behavior-x: none; }
       : 'Игрок';
     const item=document.createElement('span');
     item.className='live-win-item';
-    item.textContent=`${name.slice(0,24)} · +${moneyLive(amount)} · ${game}`;
+    item.innerHTML=`${esc(name.slice(0,24))} · <b class="boom-green">+${esc(moneyLive(amount))}</b> · ${esc(game)}`;
     track.appendChild(item);
     while(track.children.length>40)track.removeChild(track.firstChild);
   }
@@ -6018,6 +6188,7 @@ html, body { overscroll-behavior-x: none; }
 })();
 </script>
 </body>
+</html><style id="profile-stats-white-fix">
 /* Profile statistics: force readable white text */
 #profile .profile-stat,
 #profile .profile-stat *,
@@ -6035,4 +6206,3 @@ html, body { overscroll-behavior-x: none; }
   -webkit-text-fill-color: rgba(255,255,255,.72) !important;
 }
 </style>
-</html>
