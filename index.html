@@ -3147,7 +3147,7 @@ function bjOnlineRender(room){
         $("#bjOppHand").innerHTML="";
     }
 
-    const playing=room.status==="playing" && me && !me.done;
+    const playing=room.status==="playing" && me && !me.done && room.turn===uid;
     $("#bjOnlineHit").disabled=!playing;
     $("#bjOnlineStand").disabled=!playing;
     $("#bjOnlineDuel").style.display=ids.length ? "grid" : "none";
@@ -3210,6 +3210,7 @@ async function bjOnlineFind(){
         notice("Ты уже находишься в комнате","bad");
         return;
     }
+
     const bet=Math.floor(Number($("#bjOnlineBet").value));
     if(!Number.isFinite(bet)||bet<=0){
         notice("Укажи корректную ставку","bad");
@@ -3220,66 +3221,112 @@ async function bjOnlineFind(){
         return;
     }
 
+    const queueRef=db.ref("blackjackOnline/queue");
+    const roomRef=db.ref("blackjackOnline/rooms");
+    let spent=false;
+    let currentRoomId=null;
+
     $("#bjFindBtn").disabled=true;
     $("#bjCancelBtn").disabled=false;
     $("#bjOnlineWait").style.display="block";
     $("#bjOnlineWait").textContent="Ищем второго игрока…";
 
-    const queueRef=db.ref("blackjackOnline/queue");
-    const roomRef=db.ref("blackjackOnline/rooms");
     try{
-        const snap=await queueRef.once("value");
-        const queue=snap.val()||{};
-        let opponentId=null, opponent=null;
+        // Read current queue. A player can only join a room with the same bet.
+        const queueSnap=await queueRef.once("value");
+        const queue=queueSnap.val()||{};
+        let opponentId=null;
+        let opponent=null;
+
         for(const [id,q] of Object.entries(queue)){
-            if(id!==uid && q && q.uid && q.uid!==uid && Number(q.bet)===bet){
-                opponentId=id; opponent=q; break;
+            if(
+                id!==uid &&
+                q &&
+                q.uid &&
+                q.uid!==uid &&
+                q.roomId &&
+                Number(q.bet)===bet
+            ){
+                opponentId=id;
+                opponent=q;
+                break;
             }
         }
 
         if(opponentId){
-            const roomId=opponent.roomId;
-            const ref=roomRef.child(roomId);
-            const rs=await ref.once("value");
-            const room=rs.val();
-            if(!room || room.status!=="waiting"){
-                await queueRef.child(opponentId).remove();
-                return bjOnlineFind();
+            // JOIN EXISTING ROOM
+            currentRoomId=opponent.roomId;
+            const ref=roomRef.child(currentRoomId);
+            const roomSnap=await ref.once("value");
+            const room=roomSnap.val();
+
+            if(!room || room.status!=="waiting" || room.host!==opponent.uid){
+                // Do not delete another player's queue entry here.
+                // Firebase Rules correctly allow a user to delete only their own queue entry.
+                currentRoomId=null;
+                $("#bjFindBtn").disabled=false;
+                $("#bjCancelBtn").disabled=true;
+                $("#bjOnlineWait").textContent="Комната уже занята. Ищем другую…";
+                return setTimeout(()=>bjOnlineFind(),250);
+            }
+
+            if(!Array.isArray(room.deck) || room.deck.length<4){
+                throw new Error("Комната содержит некорректную колоду");
             }
 
             if(!spend(bet)){
-                notice("Не удалось списать ставку","bad");
+                $("#bjFindBtn").disabled=false;
+                $("#bjCancelBtn").disabled=true;
                 return;
             }
+            spent=true;
 
+            const host=room.host;
+            const hostData=room.players && room.players[host] || {};
+
+            // Important: the guest does NOT remove queue/{host}.
+            // The old code did that and Firebase Rules correctly rejected it.
+            // The host removes his own queue record when he observes status=playing.
             await ref.update({
                 status:"playing",
-                playerIds:[opponent.uid,uid],
+                playerIds:[host,uid],
                 players:{
-                    [opponent.uid]:{
-                        uid:opponent.uid,name:opponent.name||"Игрок",
-                        cards:[room.deck[0],room.deck[2]],done:false,bust:false
+                    [host]:{
+                        uid:host,
+                        name:hostData.name||opponent.name||"Игрок",
+                        cards:[room.deck[0],room.deck[2]],
+                        done:false,
+                        bust:false
                     },
                     [uid]:{
-                        uid,name:bjOnlineName(),
-                        cards:[room.deck[1],room.deck[3]],done:false,bust:false
+                        uid,
+                        name:bjOnlineName(),
+                        cards:[room.deck[1],room.deck[3]],
+                        done:false,
+                        bust:false
                     }
                 },
-                turn:opponent.uid,
+                turn:host,
                 startedAt:Date.now()
             });
-            await queueRef.child(opponentId).remove();
-            bjOnline.roomId=roomId;
+
+            bjOnline.roomId=currentRoomId;
             bjOnline.role="guest";
             bjOnline.bet=bet;
         }else{
+            // CREATE NEW ROOM
             if(!spend(bet)){
                 $("#bjFindBtn").disabled=false;
+                $("#bjCancelBtn").disabled=true;
                 return;
             }
+            spent=true;
+
             const roomId="bj_"+Date.now()+"_"+Math.random().toString(36).slice(2,8);
+            currentRoomId=roomId;
             const deck=bjOnlineDeck();
             const ref=roomRef.child(roomId);
+
             await ref.set({
                 status:"waiting",
                 host:uid,
@@ -3287,31 +3334,65 @@ async function bjOnlineFind(){
                 bet:bet,
                 deck:deck,
                 players:{
-                    [uid]:{uid,name:bjOnlineName(),cards:[],done:false,bust:false}
+                    [uid]:{
+                        uid,
+                        name:bjOnlineName(),
+                        cards:[],
+                        done:false,
+                        bust:false
+                    }
                 },
                 createdAt:Date.now()
             });
-            await queueRef.child(uid).set({
-                uid,roomId,bet,name:bjOnlineName(),createdAt:Date.now()
-            });
+
+            // If this fails, remove our room before refunding.
+            try{
+                await queueRef.child(uid).set({
+                    uid,
+                    roomId,
+                    bet,
+                    name:bjOnlineName(),
+                    createdAt:Date.now()
+                });
+            }catch(queueError){
+                try{ await ref.remove(); }catch(_){ }
+                throw queueError;
+            }
+
             bjOnline.roomId=roomId;
             bjOnline.role="host";
             bjOnline.bet=bet;
         }
 
+        // Start room listener only after the room is successfully created/joined.
         bjOnline.ref=roomRef.child(bjOnline.roomId);
         bjOnline.listener=snap=>{
             const room=snap.val();
+
             if(!room){
                 bjOnlineResetUi();
                 notice("Комната закрыта","bad");
                 return;
             }
+
+            // Host can remove ONLY his own queue entry.
+            // This is intentionally done from the host client, not the guest.
+            if(
+                bjOnline.role==="host" &&
+                room.status==="playing"
+            ){
+                queueRef.child(uid).remove().catch(e=>{
+                    console.warn("Queue cleanup failed:",e);
+                });
+            }
+
             bjOnlineRender(room);
+
             if(room.status==="finished"){
                 const settledKey="bj_settled_"+bjOnline.roomId;
                 if(!sessionStorage.getItem(settledKey)){
                     sessionStorage.setItem(settledKey,"1");
+
                     if(room.winner===uid){
                         addBalance(room.bet*2);
                         registerWin(room.bet*2);
@@ -3322,86 +3403,134 @@ async function bjOnlineFind(){
                 }
             }
         };
-        bjOnline.ref.on("value",bjOnline.listener);
+
+        bjOnline.ref.on("value",bjOnline.listener,error=>{
+            console.error("Online blackjack listener error",error);
+            notice("Ошибка соединения с онлайн-комнатой: "+(error.code||error.message||error),"bad");
+        });
+
     }catch(e){
         console.error("Online blackjack start error",e);
-        addBalance(bet);
+
+        // Refund only the local stake that this attempt actually spent.
+        if(spent){
+            addBalance(bet);
+        }
+
+        // Clean up a room created by this client if necessary.
+        if(currentRoomId && bjOnline.role==="host"){
+            try{ await roomRef.child(currentRoomId).remove(); }catch(_){ }
+            try{ await queueRef.child(uid).remove(); }catch(_){ }
+        }
+
         bjOnlineResetUi();
-        notice("Не удалось создать онлайн-комнату. Проверь Firebase Rules.","bad");
+
+        const code=e && e.code ? e.code : "unknown";
+        const message=e && e.message ? e.message : String(e);
+        notice("Онлайн-ошибка: "+code+" — "+message,"bad");
     }
 }
 
 async function bjOnlineCancel(){
     const uid=bjOnlineUid();
+    const roomId=bjOnline.roomId;
+    const bet=bjOnline.bet;
+
     try{
-        if(firebaseReady && db && bjOnline.roomId){
-            const ref=db.ref("blackjackOnline/rooms/"+bjOnline.roomId);
+        if(firebaseReady && db && roomId){
+            const ref=db.ref("blackjackOnline/rooms/"+roomId);
             const snap=await ref.once("value");
             const room=snap.val();
-            if(room && room.status==="waiting"){
+
+            if(room && room.status==="waiting" && room.host===uid){
                 await db.ref("blackjackOnline/queue/"+uid).remove();
                 await ref.remove();
-                addBalance(bjOnline.bet);
+                if(bet>0) addBalance(bet);
+            }else if(room && room.status==="waiting" && room.host!==uid){
+                // Guest has no own queue record in this room, so just leave UI.
+                // Do not delete host's queue entry.
+                if(bet>0) addBalance(bet);
             }
         }
     }catch(e){
-        console.error(e);
+        console.error("Online blackjack cancel error",e);
+        notice("Не удалось отменить поиск: "+(e.code||e.message||e),"bad");
     }
+
     bjOnlineResetUi();
 }
 
 async function bjOnlineAction(action){
     const uid=bjOnlineUid();
     if(!uid||!bjOnline.roomId||!db||bjOnline.busy)return;
+
     bjOnline.busy=true;
     try{
         const ref=db.ref("blackjackOnline/rooms/"+bjOnline.roomId);
         const snap=await ref.once("value");
         const room=snap.val();
+
         if(!room || room.status!=="playing")return;
+        if(!room.playerIds || room.playerIds.indexOf(uid)===-1)return;
+
         const me=room.players && room.players[uid];
         if(!me || me.done || room.turn!==uid)return;
 
         let cards=Array.isArray(me.cards)?me.cards.slice():[];
+
         if(action==="hit"){
             const used=Object.values(room.players||{}).flatMap(p=>p.cards||[]);
             const usedKeys=new Set(used.map(c=>c.rank+"|"+c.suit));
             const next=room.deck.find(c=>!usedKeys.has(c.rank+"|"+c.suit));
-            if(!next) return;
+            if(!next)return;
+
             cards.push(next);
             const value=handValue(cards);
             const update={};
             update["players/"+uid+"/cards"]=cards;
+
             if(value>=21){
                 update["players/"+uid+"/done"]=true;
                 update["players/"+uid+"/bust"]=value>21;
             }
+
             await ref.update(update);
         }else{
             await ref.child("players/"+uid).update({done:true});
         }
 
         const after=(await ref.once("value")).val();
+        if(!after || after.status!=="playing")return;
+
         const ps=Object.values(after.players||{});
-        if(ps.length===2){
-            const allDone=ps.every(p=>p.done);
-            if(allDone){
-                const a=ps[0],b=ps[1];
-                const av=handValue(a.cards||[]), bv=handValue(b.cards||[]);
-                let winner="draw";
-                if(a.bust && !b.bust) winner=b.uid;
-                else if(b.bust && !a.bust) winner=a.uid;
-                else if(!a.bust&&!b.bust && av>bv) winner=a.uid;
-                else if(!a.bust&&!b.bust && bv>av) winner=b.uid;
-                await ref.update({status:"finished",winner,finishedAt:Date.now()});
-            }else{
-                const next=ps.find(p=>!p.done);
-                if(next) await ref.update({turn:next.uid});
+        if(ps.length!==2)return;
+
+        const allDone=ps.every(p=>p.done);
+        if(allDone){
+            const a=ps[0],b=ps[1];
+            const av=handValue(a.cards||[]);
+            const bv=handValue(b.cards||[]);
+            let winner="draw";
+
+            if(a.bust && !b.bust)winner=b.uid;
+            else if(b.bust && !a.bust)winner=a.uid;
+            else if(!a.bust&&!b.bust&&av>bv)winner=a.uid;
+            else if(!a.bust&&!b.bust&&bv>av)winner=b.uid;
+
+            await ref.update({
+                status:"finished",
+                winner,
+                finishedAt:Date.now()
+            });
+        }else{
+            const next=ps.find(p=>!p.done);
+            if(next){
+                await ref.update({turn:next.uid});
             }
         }
     }catch(e){
         console.error("Online blackjack action error",e);
-        notice("Не удалось выполнить действие","bad");
+        notice("Не удалось выполнить действие: "+(e.code||e.message||e),"bad");
     }finally{
         bjOnline.busy=false;
     }
@@ -3411,8 +3540,11 @@ function bjOnlineHit(){ bjOnlineAction("hit"); }
 function bjOnlineStand(){ bjOnlineAction("stand"); }
 
 window.addEventListener("beforeunload",()=>{
+    // Only the host owns this queue entry, so only the host removes it.
     if(bjOnline.roomId && bjOnline.role==="host" && db){
-        try{ db.ref("blackjackOnline/queue/"+bjOnlineUid()).remove(); }catch(_){}
+        try{
+            db.ref("blackjackOnline/queue/"+bjOnlineUid()).remove();
+        }catch(_){ }
     }
 });
 
