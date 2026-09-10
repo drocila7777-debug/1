@@ -379,7 +379,7 @@ html[data-theme="dark"] .mobile-nav{background:rgba(20,20,20,.92)}
    FUTURA / NEON ART-DIRECTION REDESIGN
    Visual layer only — existing markup & JS behavior preserved.
    ========================================================= */
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&display=swap');
+
 
 :root{
   --bg:#090909;
@@ -833,14 +833,14 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;o
 /* mines / misc cells */
 .mine-cell{border-radius:0!important;background:#101010!important;border-color:rgba(255,255,255,.12)!important}.mine-cell:hover{border-color:var(--lime)!important;background:#171717!important}.mine-cell.safe{background:var(--lime)!important;color:#070707!important}.mine-cell.mine{background:var(--pink)!important}
 /* all lower UI */
-.gs-row,.shop-item,.ach,.quest,.leader-row,.tournament-row{border-radius:0!important;background:#101010!important;border:1px solid rgba(255,255,255,.11)!important}
+.gs-row,.shop-item,.ach,.quest,.leader-row{border-radius:0!important;background:#101010!important;border:1px solid rgba(255,255,255,.11)!important}
 .notice{border-radius:0!important;background:#111!important;border:1px solid var(--lime)!important;color:#fff!important}
 .win-overlay{background:rgba(0,0,0,.78)!important;backdrop-filter:blur(14px)}
 .win-box{border-radius:0!important;background:#0b0b0b!important;border:1px solid var(--lime)!important;box-shadow:0 0 100px rgba(202,255,0,.14)!important}
 /* decorative giant labels behind key sections */
-#gameSelector,#bonuses,#profile,#leaders,#tournament{position:relative}
-#gameSelector::after,#bonuses::after,#profile::after,#leaders::after,#tournament::after{position:absolute;right:0;top:-20px;font-family:'Unbounded';font-size:90px;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.055);pointer-events:none;z-index:-1}
-#gameSelector::after{content:'PLAY'}.game#bonuses::after{content:'BONUS'}.game#profile::after{content:'USER'}.game#leaders::after{content:'TOP'}.game#tournament::after{content:'CUP'}
+#gameSelector,#bonuses,#profile,#leaders{position:relative}
+#gameSelector::after,#bonuses::after,#profile::after,#leaders::after::after{position:absolute;right:0;top:-20px;font-family:'Unbounded';font-size:90px;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.055);pointer-events:none;z-index:-1}
+#gameSelector::after{content:'PLAY'}.game#bonuses::after{content:'BONUS'}.game#profile::after{content:'USER'}.game#leaders::after{content:'TOP'}
 /* mobile */
 @media(max-width:900px){
  .container{width:min(100% - 24px,1360px);padding-top:25px}.header-inner{width:calc(100% - 24px)}
@@ -937,7 +937,7 @@ body:before{width:700px;height:700px;top:-300px;left:-180px;background:radial-gr
 .reel-window{border:2px solid rgba(200,255,0,.5)!important;border-radius:0!important;background:#050505!important;box-shadow:inset 0 0 30px rgba(109,32,255,.18),0 0 25px rgba(200,255,0,.06)}
 .reel-symbol{filter:drop-shadow(0 0 10px rgba(200,255,0,.15))}
 /* decorative sections */
-.profile-card,.leader-card,.bonus-card,.tournament-card,.panel,.stat-card,.shop-item,.quest-card,.achievement-card{border-radius:0!important;background:#0b0b0b!important;border-color:rgba(255,255,255,.1)!important;box-shadow:none!important}
+.profile-card,.leader-card,.bonus-card,.panel,.stat-card,.shop-item,.quest-card,.achievement-card{border-radius:0!important;background:#0b0b0b!important;border-color:rgba(255,255,255,.1)!important;box-shadow:none!important}
 /* scrollbars */
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:#070707}::-webkit-scrollbar-thumb{background:#2b2b2b;border:2px solid #070707}::-webkit-scrollbar-thumb:hover{background:var(--acid)}
 @media(max-width:900px){.hero{grid-template-columns:1fr}.hero-side{min-height:260px}.hero-main{min-height:560px}.games-grid{grid-template-columns:repeat(2,1fr)}.game-card.featured{grid-column:span 2}}
@@ -1066,6 +1066,9 @@ body:before{width:700px;height:700px;top:-300px;left:-180px;background:radial-gr
 </style>
 <base target="_blank">
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&display=swap">
 <style id="ultimate-visual-overhaul">
 :root{
  --lime:#caff00;--lime2:#e5ff72;--ink:#070708;--paper:#f3f3ee;--violet:#7c3cff;--pink:#ff4bd8;--cyan:#55e9ff;
@@ -1510,6 +1513,26 @@ input:focus, select:focus{
 .boom-float{animation:boomFloat 3s ease-in-out infinite}
 </style>
 
+<style id="boom-performance-optimized">
+/* Performance layer: keeps the visual system and animations intact while reducing layout/paint work. */
+.hero, .game-card, .boom-widget, .stat-card, .profile-card, .game-panel, .panel, .machine, .slot-machine {
+  contain: layout paint style;
+}
+#gameSelector, #bonuses, #leaders, #profile {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 620px;
+}
+.game-card, .boom-widget, .stat-card, .profile-card {
+  isolation: isolate;
+}
+@media (max-width: 760px) {
+  .header { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Accessibility only: browser/user preference, not a permanent removal of animations. */
+  html { scroll-behavior: auto; }
+}
+</style>
 </head>
 <body>
 <div class="brand-line"></div>
@@ -1656,16 +1679,7 @@ input:focus, select:focus{
                 </div>
             </article>
 
-            <article class="game-card" data-categories="all popular" onclick="openSection('tournament')">
-                
-                <div class="game-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 01-8 0V4z"/><path d="M8 5H4.5a3.5 3.5 0 003.5 3.5M16 5h3.5a3.5 3.5 0 01-3.5 3.5M12 13v4M9 20h6M10 17h4"/></svg></div>
-                <div class="game-card-title">Турнир дня</div>
-                <div class="game-card-sub">Топ-3 по выигрышу за сутки делят 850 000.</div>
-                <div class="game-card-meta">
-                    <div class="game-card-limit">RESET 24H</div>
-                    <button class="play">СМОТРЕТЬ</button>
-                </div>
-            </article>
+
 
         </div>
     </section>
@@ -1906,23 +1920,6 @@ input:focus, select:focus{
         <div class="panel"><div id="leadersTable"></div></div>
     </section>
 
-    <!-- ТУРНИР -->
-    <section class="game" id="tournament">
-        <div class="game-head">
-            <div>
-                <div class="game-title"> Турнир дня</div>
-                <div class="game-sub">Считаются монеты, выигранные сегодня. Призы топ-3 начисляются на следующий день.</div>
-            </div>
-            <button class="game-close" onclick="closeGames()">×</button>
-        </div>
-        <div class="grid grid-3" style="margin-bottom:14px">
-            <div class="stat"><div class="label"> 1 место</div><div class="stat-value">500 000</div></div>
-            <div class="stat"><div class="label"> 2 место</div><div class="stat-value">250 000</div></div>
-            <div class="stat"><div class="label"> 3 место</div><div class="stat-value">100 000</div></div>
-        </div>
-        <div class="panel"><div id="tournTable"></div></div>
-    </section>
-
     <!-- ПРОФИЛЬ -->
     <section class="game" id="profile">
       <div class="profile-shell">
@@ -1950,7 +1947,7 @@ input:focus, select:focus{
           </div></div>
         </div>
         <div class="profile-identity"><div><span class="profile-section-label">01 / IDENTITY</span><h2>ИМЯ И ОБРАЗ</h2></div><div class="profile-name-editor"><input class="input" id="usernameInput" placeholder="Имя игрока"><button class="btn btn-pink" onclick="saveUsername()">СОХРАНИТЬ</button></div></div>
-        <div class="made-avatar-editor"><div class="made-avatar-preview" id="avatarView"></div><div class="avatar-editor-copy"><span class="profile-section-label">CUSTOM AVATAR</span><h3>ТВОЙ СОБСТВЕННЫЙ ОБРАЗ</h3><p>Загрузи свою картинку. Для вошедшего аккаунта она сохраняется в облаке и появляется на любом устройстве.</p><div class="avatar-upload-row"><label class="btn btn-pink avatar-upload-btn">ЗАГРУЗИТЬ АВАТАРКУ<input id="avatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" onchange="uploadAvatar(event)" hidden></label><button class="btn" onclick="removeCustomAvatar()">УДАЛИТЬ</button></div><small class="avatar-upload-note">PNG / JPG / WEBP / GIF · до 5 МБ</small></div><div class="avatar-editor-mark">CLOUD<br>01</div></div>
+        <div class="made-avatar-editor"><div class="made-avatar-preview" id="avatarView"></div><div class="avatar-editor-copy"><span class="profile-section-label">CUSTOM AVATAR</span><h3>ТВОЙ СОБСТВЕННЫЙ ОБРАЗ</h3><p>Загрузи свою картинку. Для вошедшего аккаунта она сохраняется в облаке и появляется на любом устройстве.</p><div class="avatar-upload-row"><button type="button" class="btn btn-pink avatar-upload-btn" id="avatarUploadBtn" onclick="openAvatarPicker()">ЗАГРУЗИТЬ АВАТАРКУ</button><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button class="btn" onclick="removeCustomAvatar()">УДАЛИТЬ</button></div><small class="avatar-upload-note">PNG / JPG / WEBP / GIF · до 5 МБ</small></div><div class="avatar-editor-mark">CLOUD<br>01</div></div>
         <div class="profile-promo profile-block"><div><span class="profile-section-label">02 / BONUS</span><h2>ПРОМОКОД</h2></div><div class="profile-promo-row"><input class="input" id="promoInputProfile" placeholder="Введи промокод 67"><button class="btn btn-pink" onclick="usePromo('promoInputProfile')">АКТИВИРОВАТЬ</button></div><div class="game-sub">Код <b>67</b> даёт <b>6 700 000</b> монет.</div></div>
         <div class="profile-stats-grid"><div class="profile-stat"><span>GAMES</span><strong id="statGames">0</strong><i>01</i></div><div class="profile-stat"><span>WINS</span><strong id="statWins">0</strong><i>02</i></div><div class="profile-stat"><span>MAX WIN</span><strong id="statMaxWin">0</strong><i>03</i></div></div>
         <div class="profile-history profile-block"><div><span class="profile-section-label">03 / ACTIVITY</span><h2>ПОСЛЕДНИЕ ПОБЕДЫ</h2></div><div id="historyText" class="profile-history-list">История пока пуста.</div></div>
@@ -2066,8 +2063,6 @@ const defaultState={
     refCode:null,
     refDone:false,
     dailyWin:null,
-    tournSnap:null,
-    tournYest:null,
     shop:{owned:{},frame:null,skin:"classic"}
 };
 
@@ -2109,7 +2104,7 @@ const firebaseConfig={
     appId:"1:325086041204:web:911f243f622c359924ed21"
 };
 
-let db=null,playersRef=null,usersRef=null,storage=null,firebaseReady=false,globalPlayers=[],myFirebaseUid=null;
+let db=null,playersRef=null,usersRef=null,storage=null,liveWinsRef=null,firebaseReady=false,globalPlayers=[],myFirebaseUid=null;
 let cloudStateUnsubscribe=null;
 let authUser=null,authReady=false,cloudSyncTimer=null,authMode="login";
 
@@ -2249,7 +2244,6 @@ async function submitAuth(event){
         renderBonuses();
         renderQuests();
         renderCrashHistory();
-        renderTournament();
         applySkin();
     }catch(e){
         setAuthError(friendlyAuthError(e));
@@ -2328,7 +2322,6 @@ function refreshAfterCloudChange(){
     renderBonuses();
     renderQuests();
     renderCrashHistory();
-    renderTournament();
     applySkin();
 }
 
@@ -2354,29 +2347,90 @@ function startRealtimeCloudSync(){
     cloudStateUnsubscribe=()=>ref.off("value",handler);
 }
 
+function openAvatarPicker(){
+    const input=document.getElementById("avatarFile");
+    if(!input){ notice("Поле выбора файла не найдено","bad"); return; }
+    input.value="";
+    input.click();
+}
+
 async function uploadAvatar(event){
-    const file=event.target.files[0];
-    event.target.value="";
+    const input=event && event.target;
+    const file=input && input.files && input.files[0];
+    if(input) input.value="";
     if(!file)return;
-    if(!file.type.startsWith("image/")){notice("Нужна картинка","bad");return;}
-    if(file.size>5*1024*1024){notice("Картинка больше 5 МБ","bad");return;}
-    if(!authUser||!storage){notice("Сначала войди в аккаунт — тогда аватар сохранится в облаке","bad");return;}
+
+    if(!/^image\/(png|jpeg|webp|gif)$/i.test(file.type)){
+        notice("Нужна PNG, JPG, WEBP или GIF картинка","bad");
+        return;
+    }
+    if(file.size>5*1024*1024){
+        notice("Картинка больше 5 МБ","bad");
+        return;
+    }
+
+    const btn=document.getElementById("avatarUploadBtn");
+    if(btn){btn.disabled=true;btn.textContent="ОБРАБОТКА…";}
+
     try{
-        notice("Загрузка аватарки…");
-        const safeExt=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
-        const ref=storage.ref().child(`avatars/${authUser.uid}/avatar.${safeExt}`);
-        await ref.put(file,{contentType:file.type,cacheControl:"public,max-age=3600"});
-        const url=await ref.getDownloadURL();
-        state.customAvatar=url+"&v="+Date.now();
-        await saveState(true);
+        // Не используем Firebase Storage: аватар сохраняется как маленькая
+        // оптимизированная картинка прямо в state. Это работает даже если
+        // Firebase Storage Rules/Storage в проекте настроены неправильно.
+        notice("Обработка аватарки…");
+
+        const dataUrl=await new Promise((resolve,reject)=>{
+            const reader=new FileReader();
+            reader.onerror=()=>reject(new Error("Не удалось прочитать файл"));
+            reader.onload=()=>{
+                const img=new Image();
+                img.onerror=()=>reject(new Error("Не удалось открыть изображение"));
+                img.onload=()=>{
+                    const max=320;
+                    const scale=Math.min(1,max/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height));
+                    const w=Math.max(1,Math.round((img.naturalWidth||img.width)*scale));
+                    const h=Math.max(1,Math.round((img.naturalHeight||img.height)*scale));
+                    const canvas=document.createElement("canvas");
+                    canvas.width=w; canvas.height=h;
+                    const ctx=canvas.getContext("2d");
+                    if(!ctx){reject(new Error("Браузер не поддерживает обработку картинки"));return;}
+                    ctx.fillStyle="#ffffff";
+                    ctx.fillRect(0,0,w,h);
+                    ctx.drawImage(img,0,0,w,h);
+                    const result=canvas.toDataURL("image/jpeg",0.78);
+                    if(!result || result.length>450000){
+                        reject(new Error("Не удалось уменьшить размер аватарки"));
+                        return;
+                    }
+                    resolve(result);
+                };
+                img.src=reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        state.customAvatar=dataUrl;
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
         renderAvatar();
-        publishMyUpdate();
-        notice("Аватарка сохранена на всех устройствах","good");
+
+        // Показываем результат сразу. Облачная запись выполняется отдельно,
+        // чтобы зависший Firebase не оставлял кнопку в состоянии "загрузка".
+        if(authUser){
+            saveState(true).catch(e=>console.error("Avatar cloud save error",e));
+        }
+
+        notice("Аватарка установлена","good");
     }catch(e){
         console.error("Avatar upload error",e);
-        notice("Не удалось загрузить аватарку: "+friendlyAuthError(e),"bad");
+        notice("Не удалось установить аватарку: "+(e.message||"ошибка обработки файла"),"bad");
+    }finally{
+        if(btn){btn.disabled=false;btn.textContent="ЗАГРУЗИТЬ АВАТАРКУ";}
     }
 }
+
+document.addEventListener("DOMContentLoaded",()=>{
+    const input=document.getElementById("avatarFile");
+    if(input) input.addEventListener("change",uploadAvatar);
+});
 
 async function removeCustomAvatar(){
     if(!authUser){notice("Войди в аккаунт","bad");return;}
@@ -2419,6 +2473,7 @@ try{
         storage=firebase.storage();
         playersRef=db.ref("players");
         usersRef=db.ref("users");
+        liveWinsRef=db.ref("liveWins");
         firebaseReady=true;
 
         // Явно сохраняем сессию в браузере. Это важно для входа после
@@ -2441,10 +2496,10 @@ try{
                 renderBalance();
                 renderProfile();
                 renderBonuses();
+                setTimeout(startLiveWins,50);
                 renderQuests();
                 renderCrashHistory();
-                renderTournament();
-                applySkin();
+                        applySkin();
                 publishPlayerData(true);
             }else{
                 state=loadState();
@@ -2691,7 +2746,6 @@ function openSection(id){
     if(id==="bonuses"){renderBonuses();renderQuests();}
     if(id==="profile")renderProfile();
     if(id==="leaders")renderLeaders();
-    if(id==="tournament")renderTournament();
     updateMobileNav(id);
 }
 
@@ -2787,7 +2841,6 @@ function track(game,data){
 
     if(currentGame==="bonuses")renderQuests();
     if(currentGame==="profile"){renderGameStats();renderLevel();}
-    if(currentGame==="tournament")renderTournament();
 }
 
 /* =========================================================
@@ -4252,70 +4305,6 @@ function renderGameStats(){
     }).join("");
 }
 
-/* Турнир */
-function tournamentRows(){
-    const t=todayKey();
-    const day=Math.floor(Date.now()/864e5);
-
-    const bots=LEADER_BOTS.map((b,i)=>({
-        name:b.name,
-        ava:b.emoji,
-        win:Math.round(Math.abs(Math.sin(day*1.3+i*2.9))*420000*(0.4+b.speed))
-    }));
-
-    bots.push({
-        name:state.username,
-        ava:"",
-        win:state.dailyWin&&state.dailyWin.date===t?state.dailyWin.amount:0,
-        me:true
-    });
-
-    bots.sort((a,b)=>b.win-a.win);
-    return bots;
-}
-
-function renderTournament(){
-    const el=$("#tournTable");
-    if(!el)return;
-
-    const rows=tournamentRows();
-
-    el.innerHTML=rows.map((r,i)=>{
-        const medal=["","",""][i]||(i+1)+".";
-        return '<div class="gs-row"><span>'+medal+" "+r.ava+" "+r.name+(r.me?' <b style="color:#FF6B00">(ты)</b>':"")+"</span><b>+"+money(r.win)+" </b></div>";
-    }).join("");
-
-    const t=todayKey();
-
-    if(!state.tournSnap||state.tournSnap.date!==t){
-        if(state.tournSnap){
-            state.tournYest={date:state.tournSnap.date,rows:state.tournSnap.rows,granted:false};
-        }
-        state.tournSnap={date:t,rows:rows.map(r=>({name:r.name,win:r.win,me:!!r.me}))};
-        saveState();
-    }
-
-    checkTournamentGrant();
-}
-
-function checkTournamentGrant(){
-    const y=state.tournYest;
-    if(!y||y.granted||y.date!==yesterdayKey())return;
-
-    y.granted=true;
-
-    const rank=y.rows.findIndex(r=>r.me)+1;
-
-    if(rank>0&&rank<=3){
-        const prize=[500000,250000,100000][rank-1];
-        addBalance(prize);
-        setTimeout(()=>showWin(prize,"ТУРНИР: "+rank+" МЕСТО"),700);
-        notice("Вчерашний турнир: "+rank+" место!","good");
-    }
-
-    saveState();
-}
-
 /* Уровень */
 function renderLevel(){
     const lvl=Math.floor(state.stats.games/10)+1;
@@ -4402,8 +4391,6 @@ function init(){
     renderQuests();
     renderProfile();
     renderCrashHistory();
-    renderTournament();
-    checkTournamentGrant();
     initRefInput();
     bindTilt();
     markHotCards();
@@ -4908,5 +4895,178 @@ html, body { overscroll-behavior-x: none; }
 })();
 </script>
 
+
+<style id="boom-product-upgrade">
+/* BOOM PRODUCT UPGRADE — dashboard / progression / activity */
+.boom-home-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:14px;margin:18px 0 8px}
+.boom-widget{position:relative;overflow:hidden;background:#0d0d10;color:#fff;border:1px solid #28282e;padding:22px;min-height:155px;box-shadow:0 16px 50px rgba(0,0,0,.14)}
+.boom-widget:after{content:"";position:absolute;width:220px;height:220px;border:1px solid rgba(202,255,0,.12);border-radius:50%;right:-100px;top:-100px}
+.boom-widget .k{font:800 10px/1 Arial;letter-spacing:.18em;color:#caff00;text-transform:uppercase}
+.boom-widget h3{font:900 26px/.95 Arial;margin:9px 0 7px;letter-spacing:-.04em}
+.boom-widget p{margin:0;color:#8e8e95;font-size:12px;line-height:1.5;max-width:560px}
+.boom-widget-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.boom-progress{height:7px;background:#25252b;overflow:hidden;flex:1}.boom-progress i{display:block;height:100%;background:#caff00;width:0;transition:width .45s ease}
+.boom-mini{font:900 12px Arial;color:#fff;white-space:nowrap}.boom-green{color:#caff00}.boom-pink{color:#e73bff}
+.boom-live{grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#101014;border:1px solid #28282e;overflow:hidden;white-space:nowrap}
+.boom-live-dot{width:7px;height:7px;border-radius:50%;background:#caff00;box-shadow:0 0 15px #caff00;flex:none}.boom-live-track{display:flex;gap:28px;animation:boomTicker 24s linear infinite;font:700 11px Arial;color:#aaa}
+@keyframes boomTicker{from{transform:translateX(0)}to{transform:translateX(-45%)}}
+.boom-title-badge{display:inline-flex;align-items:center;padding:5px 8px;margin-left:7px;border:1px solid rgba(202,255,0,.35);color:#caff00;font:800 9px Arial;letter-spacing:.1em}
+.boom-profile-rpg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.boom-rpg-card{background:#111115;border:1px solid #29292f;padding:18px}.boom-rpg-card .label{font:800 9px Arial;letter-spacing:.16em;color:#777}.boom-rpg-card strong{display:block;font:900 32px Arial;margin-top:6px}.boom-rpg-card small{color:#777;font-size:11px}
+.boom-history-tools{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.boom-history-tools button{border:1px solid #303036;background:#151519;color:#aaa;padding:7px 10px;font:800 10px Arial;cursor:pointer}.boom-history-tools button.active{color:#0b0b0d;background:#caff00;border-color:#caff00}
+.boom-transaction{display:flex;justify-content:space-between;gap:15px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px}.boom-transaction b{font-size:14px}.boom-transaction small{display:block;color:#666;margin-top:3px}.boom-pos{color:#caff00}.boom-neg{color:#ff667f}
+@media(max-width:760px){.boom-home-grid{grid-template-columns:1fr}.boom-profile-rpg{grid-template-columns:1fr}.boom-live{grid-column:auto}.boom-widget h3{font-size:22px}}
+</style>
+<script id="boom-product-upgrade-script">
+(function(){
+  const q=s=>document.querySelector(s);
+  const money2=v=>{try{return money(Math.round(v||0))}catch(e){return Math.round(v||0).toLocaleString('ru-RU')}};
+  const games={slots:'Слоты',crash:'Crash',blackjack:'Blackjack',dice:'Dice',mines:'Mines',reaction:'Reaction',wheel:'Колесо'};
+  const ensure=function(){
+    state.xp=Number(state.xp||0); state.lastGame=state.lastGame||null; state.transactions=Array.isArray(state.transactions)?state.transactions:[]; state.title=state.title||'НОВИЧОК';
+    if(!state.xp && state.stats?.games) state.xp=state.stats.games*10;
+  };
+  ensure();
+
+  const originalAddBalance=window.addBalance;
+  if(originalAddBalance&&!originalAddBalance.__boomWrapped){
+    const wrapped=function(amount){
+      const before=Number(state.balance||0); originalAddBalance(amount);
+      ensure();
+      if(amount!==0){
+        state.transactions.unshift({time:new Date().toLocaleString('ru-RU'),amount:Math.round(amount),type:amount>0?'credit':'debit',label:amount>0?'Начисление':'Списание'});
+        state.transactions=state.transactions.slice(0,40);
+        saveState();
+      }
+    }; wrapped.__boomWrapped=true; window.addBalance=wrapped;
+  }
+  const originalSpend=window.spend;
+  if(originalSpend&&!originalSpend.__boomWrapped){
+    const wrappedSpend=function(amount){const ok=originalSpend(amount); if(ok){ensure();state.transactions.unshift({time:new Date().toLocaleString('ru-RU'),amount:-Math.round(amount),type:'debit',label:'Ставка'});state.transactions=state.transactions.slice(0,40);saveState();}return ok};wrappedSpend.__boomWrapped=true;window.spend=wrappedSpend;
+  }
+
+  const originalOpen=window.openSection;
+  if(originalOpen&&!originalOpen.__boomWrapped){
+    const wrappedOpen=function(id){ensure();if(games[id]){state.lastGame=id;saveState();}return originalOpen.apply(this,arguments)};wrappedOpen.__boomWrapped=true;window.openSection=wrappedOpen;
+  }
+
+  function levelInfo(){
+    const xp=Number(state.xp||0), lvl=Math.floor(xp/100)+1, cur=xp%100;
+    return {xp,lvl,cur,next:100-cur};
+  }
+  const TITLES=[
+    [1,'НОВИЧОК'],[3,'ИГРОК'],[5,'РИСКОВЫЙ'],[8,'ХИЩНИК'],[12,'МАСТЕР'],[18,'ЛЕГЕНДА'],[25,'АРКАДНЫЙ БОГ']
+  ];
+  function titleFor(lvl){let t=TITLES[0][1];TITLES.forEach(x=>{if(lvl>=x[0])t=x[1]});return t}
+
+  window.renderLevel=function(){ensure();const x=levelInfo();state.title=titleFor(x.lvl);const b=q('#lvlBar'),n=q('#lvlNum'),h=q('#lvlHint');if(b)b.style.width=x.cur+'%';if(n)n.textContent=x.lvl;if(h)h.textContent='Ещё '+x.next+' XP до уровня '+(x.lvl+1);const badge=q('#boomTitleBadge');if(badge)badge.textContent=state.title;const xp=q('#boomXpValue');if(xp)xp.textContent=x.xp+' XP';const xpb=q('#boomXpBar');if(xpb)xpb.style.width=x.cur+'%';const title=q('#boomTitleValue');if(title)title.textContent=state.title;};
+
+  function awardXP(n){ensure();state.xp+=Number(n||0);const before=levelInfo().lvl;const after=Math.floor(state.xp/100)+1;state.title=titleFor(after);if(after>before){notice('Новый уровень: '+after+' — '+state.title,'good');confetti();}saveState();renderLevel();}
+  window.boomAwardXP=awardXP;
+
+  const oldRegisterGame=window.registerGame;
+  if(oldRegisterGame&&!oldRegisterGame.__boomWrapped){window.registerGame=function(){oldRegisterGame.apply(this,arguments);awardXP(10)};window.registerGame.__boomWrapped=true}
+  const oldRegisterWin=window.registerWin;
+  if(oldRegisterWin&&!oldRegisterWin.__boomWrapped){window.registerWin=function(amount){oldRegisterWin.apply(this,arguments);awardXP(Math.max(5,Math.min(50,Math.floor(Number(amount||0)/10000)+10)));publishLiveWin(amount,state.lastGame||'slots')};window.registerWin.__boomWrapped=true}
+
+  function publishLiveWin(amount, gameId){
+    if(!firebaseReady || !authUser || !liveWinsRef || Number(amount||0)<=0) return;
+    const gameName=games[gameId]||games[state.lastGame]||"Игра";
+    const name=String(authUser.displayName||state.username||authUser.email?.split("@")[0]||"Игрок").trim().slice(0,24)||"Игрок";
+    const safeAmount=Math.round(Number(amount||0));
+    liveWinsRef.push({
+      uid:authUser.uid,
+      name:name,
+      amount:safeAmount,
+      game:gameName,
+      createdAt:firebase.database.ServerValue.TIMESTAMP
+    }).catch(e=>console.warn("Live win publish error",e));
+  }
+
+  function startLiveWins(){
+    if(!firebaseReady || !liveWinsRef) return;
+    const track=q('#boomLiveTrack');
+    if(!track || track.__liveWinsStarted) return;
+    track.__liveWinsStarted=true;
+    const recent=liveWinsRef.orderByChild('createdAt').limitToLast(30);
+    recent.on('child_added',snap=>{
+      const w=snap.val()||{};
+      if(!w.name || !w.amount || !w.game) return;
+      const item=document.createElement('span');
+      item.dataset.winId=snap.key;
+      item.innerHTML=`${escapeHtml(String(w.name))} · <b class="boom-green">+${money2(w.amount)}</b> · ${escapeHtml(String(w.game))}`;
+      track.appendChild(item);
+      while(track.children.length>30) track.removeChild(track.firstChild);
+      // Rebuild a seamless duplicate track for CSS marquee.
+      const items=[...track.children].map(x=>x.outerHTML).join('');
+      track.innerHTML=items+items;
+    },err=>console.warn('Live wins listener error',err));
+  }
+
+  function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+  function buildHome(){
+    if(q('#boomHomeGrid'))return;
+    const hero=q('.hero'); if(!hero)return;
+    const wrap=document.createElement('div');wrap.id='boomHomeGrid';wrap.className='boom-home-grid';
+    wrap.innerHTML=`
+      <div class="boom-widget"><div class="k">CONTINUE PLAYING</div><h3 id="boomContinueTitle">ИГРА ДНЯ</h3><p id="boomContinueText">Выбери любой режим и начни набирать XP. Прогресс, достижения и статистика сохраняются.</p><div class="boom-widget-row"><button class="btn btn-pink" id="boomContinueBtn">ИГРАТЬ →</button><span class="boom-mini">+10 XP / игра</span></div></div>
+      <div class="boom-widget"><div class="k">PLAYER PROGRESS</div><h3><span id="boomXpValue">0 XP</span></h3><p><span id="boomTitleValue">НОВИЧОК</span> · следующий уровень через <span id="boomXpNeed">100 XP</span></p><div class="boom-widget-row"><div class="boom-progress"><i id="boomXpBar"></i></div><span class="boom-mini">LVL <b id="boomHomeLevel">1</b></span></div></div>
+      <div class="boom-live"><span class="boom-live-dot"></span><b style="font:800 10px Arial;letter-spacing:.12em;color:#fff">LIVE WINS</b><div class="boom-live-track" id="boomLiveTrack"></div></div>`;
+    hero.after(wrap);
+    q('#boomContinueBtn').onclick=()=>{const id=state.lastGame&&games[state.lastGame]?state.lastGame:'slots';openSection(id)};
+  }
+  function renderHome(){buildHome();ensure();const x=levelInfo();const id=state.lastGame&&games[state.lastGame]?state.lastGame:'slots';const t=q('#boomContinueTitle'),tx=q('#boomContinueText'),b=q('#boomContinueBtn');if(t)t.textContent='ПРОДОЛЖИТЬ · '+games[id].toUpperCase();if(tx)tx.textContent='Твой последний режим — '+games[id]+'. Вернись в игру и продолжай прогресс.';if(b)b.textContent='ИГРАТЬ В '+games[id].toUpperCase()+' →';if(q('#boomHomeLevel'))q('#boomHomeLevel').textContent=x.lvl;renderLevel();
+    const track=q('#boomLiveTrack');if(track && !firebaseReady){track.innerHTML='<span>Войди в аккаунт — здесь появятся реальные выигрыши игроков</span><span>LIVE · только реальные аккаунты</span>'; } startLiveWins();
+  }
+
+  function addProfileRPG(){
+    const stats=q('.profile-overview');if(!stats||q('#boomProfileRpg'))return;const box=document.createElement('div');box.id='boomProfileRpg';box.className='boom-profile-rpg';box.innerHTML=`<div class="boom-rpg-card"><span class="label">XP / PROGRESSION</span><strong id="boomXpValueProfile">0 XP</strong><div class="boom-progress" style="margin-top:12px"><i id="boomXpBarProfile"></i></div><small id="boomXpHintProfile"></small></div><div class="boom-rpg-card"><span class="label">TITLE / RANK</span><strong id="boomTitleValueProfile">НОВИЧОК</strong><small>Твой ранг растёт вместе с уровнем.</small></div>`;stats.after(box);
+  }
+  function addHistoryTools(){
+    const h=q('#historyText');if(!h||q('#boomHistoryTools'))return;const parent=h.parentElement;const tools=document.createElement('div');tools.id='boomHistoryTools';tools.className='boom-history-tools';tools.innerHTML='<button class="active" data-f="all">ВСЁ</button><button data-f="credit">НАЧИСЛЕНИЯ</button><button data-f="debit">СТАВКИ</button>';parent.insertBefore(tools,h);tools.onclick=e=>{const btn=e.target.closest('button');if(!btn)return;tools.querySelectorAll('button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderTransactions(btn.dataset.f)};
+  }
+  function renderTransactions(filter='all'){ensure();const h=q('#historyText');if(!h)return;let rows=state.transactions.filter(x=>filter==='all'||x.type===filter);if(!rows.length){h.innerHTML='<div class="profile-muted">История операций пока пуста.</div>';return;}h.innerHTML=rows.slice(0,20).map(x=>`<div class="boom-transaction"><div>${x.label}<small>${x.time}</small></div><b class="${x.amount>=0?'boom-pos':'boom-neg'}">${x.amount>=0?'+':''}${money2(x.amount)} </b></div>`).join('')}
+  function syncProfile(){ensure();addProfileRPG();addHistoryTools();const x=levelInfo();const a=q('#boomXpValueProfile'),b=q('#boomXpBarProfile'),h=q('#boomXpHintProfile'),t=q('#boomTitleValueProfile');if(a)a.textContent=x.xp+' XP';if(b)b.style.width=x.cur+'%';if(h)h.textContent='Ещё '+x.next+' XP до уровня '+(x.lvl+1);if(t)t.textContent=state.title;const badge=q('#boomTitleBadge');if(badge)badge.textContent=state.title;}
+  const oldRenderProfile=window.renderProfile;
+  if(oldRenderProfile&&!oldRenderProfile.__boomWrapped){window.renderProfile=function(){oldRenderProfile.apply(this,arguments);syncProfile();};window.renderProfile.__boomWrapped=true}
+
+  // Add title badge to profile hero.
+  const heroCopy=q('.profile-copy');if(heroCopy&&!q('#boomTitleBadge')){const s=document.createElement('span');s.id='boomTitleBadge';s.className='boom-title-badge';s.textContent=state.title;heroCopy.appendChild(s)}
+  buildHome();addProfileRPG();addHistoryTools();renderHome();syncProfile();startLiveWins();
+  window.addEventListener('hashchange',()=>{setTimeout(()=>{renderHome();syncProfile()},50)});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){renderHome();syncProfile()}});
+})();
+</script>
+
+<script id="boom-performance-runtime">
+(()=>{
+  // Avoid rebuilding the leaderboard more than once per animation frame.
+  let leaderQueued=false;
+  const originalRenderLeaders=window.renderLeaders;
+  if(typeof originalRenderLeaders==='function'){
+    window.renderLeaders=function(){
+      if(leaderQueued)return;
+      leaderQueued=true;
+      requestAnimationFrame(()=>{ leaderQueued=false; originalRenderLeaders.apply(this,arguments); });
+    };
+  }
+
+  // Pause purely visual card hover work while the tab is hidden.
+  document.addEventListener('visibilitychange',()=>{
+    document.documentElement.classList.toggle('tab-hidden',document.hidden);
+  },{passive:true});
+
+  // Keep large decorative sections out of the paint pipeline until needed.
+  if('IntersectionObserver' in window){
+    const io=new IntersectionObserver(entries=>{
+      for(const entry of entries){
+        entry.target.classList.toggle('is-visible',entry.isIntersecting);
+      }
+    },{rootMargin:'300px 0px'});
+    document.querySelectorAll('.game-card, .boom-widget, .stat-card').forEach(el=>io.observe(el));
+  }
+})();
+</script>
 </body>
 </html>
