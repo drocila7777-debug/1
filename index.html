@@ -2313,6 +2313,19 @@ select option{background:#101014;color:#fff}
 }
 @keyframes crashAmbient{0%,100%{box-shadow:inset 0 0 90px rgba(0,0,0,.7),0 22px 70px rgba(0,0,0,.55)}50%{box-shadow:inset 0 0 90px rgba(0,0,0,.7),0 24px 78px rgba(124,60,255,.10)}}
 </style>
+
+<style id="blackjack-rule-upgrade">
+#blackjack .bj-hand-wrap{margin:0 0 14px;padding:0 0 8px;border-radius:14px;transition:.22s ease}
+#blackjack .bj-hand-wrap.active{background:linear-gradient(90deg,rgba(202,255,0,.08),transparent);box-shadow:inset 3px 0 0 var(--qa-lime)}
+#blackjack .bj-hand-label{padding:5px 10px;color:rgba(255,255,255,.72);font:700 10px/1 'DM Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
+#blackjack .bj-hand-label b{color:#fff;font-size:12px}
+#blackjack .bj-result{margin-top:10px;min-height:34px;display:flex;align-items:center;justify-content:center;color:#fff;font:800 12px/1.3 'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;opacity:.92}
+#blackjack .bj-result.bad{color:#ff6b9a}
+#blackjack #insuranceBtn:not(:disabled){box-shadow:0 0 22px rgba(202,255,0,.18)}
+#blackjack #splitBtn:not(:disabled){border-color:rgba(124,60,255,.65)}
+@media(max-width:600px){#blackjack .bj-result{font-size:10px}.bj-hand-label{font-size:9px!important}}
+</style>
+
 </head>
 <body>
 <div class="brand-line"></div>
@@ -3942,183 +3955,168 @@ function createCardElement(card,hidden=false){
     return el;
 }
 
-/* ---------------- LOCAL ---------------- */
-let bj={active:false,bet:0,player:[],dealer:[],hidden:true,mode:"classic",doubled:false,finished:false};
+/* ---------------- LOCAL BLACKJACK — CASINO RULESET ---------------- */
+let bj={active:false,bet:0,dealer:[],hidden:true,mode:"classic",finished:false,deck:[],hands:[],activeHand:0,insurance:0,insuranceOffered:false,insuranceResolved:false,surrendered:false};
 
-function renderBlackjack(animated=true){
-    const dealer=$("#dealerHand"),player=$("#playerHand");
-    dealer.innerHTML="";player.innerHTML="";
-    bj.dealer.forEach((card,index)=>{const el=createCardElement(card,bj.hidden&&index===1);if(animated)el.style.animationDelay=(index*.10)+"s";dealer.appendChild(el);});
-    bj.player.forEach((card,index)=>{const el=createCardElement(card);if(animated)el.style.animationDelay=(.08+index*.10)+"s";player.appendChild(el);});
-    $("#playerScore").textContent=handValue(bj.player);
-    $("#dealerScore").textContent=bj.hidden?"?":handValue(bj.dealer);
-    const active=bj.active&&!bj.finished;
-    $("#hitBtn").disabled=!active;
-    $("#standBtn").disabled=!active;
-    $("#doubleBtn").disabled=!active || bj.player.length!==2 || bj.doubled || !bjRules(bj.mode).double || state.balance<bj.bet;
-    $("#surrenderBtn").disabled=true;
+function bjEnsureExtraControls(){
+    const row=document.querySelector('#blackjack .row[style*="margin-top:15px"]');
+    if(!row)return;
+    if(!$('#splitBtn')){
+        const b=document.createElement('button'); b.className='btn btn-light'; b.id='splitBtn'; b.textContent='РАЗДЕЛИТЬ'; b.onclick=splitBlackjack; row.appendChild(b);
+    }
+    if(!$('#insuranceBtn')){
+        const b=document.createElement('button'); b.className='btn'; b.id='insuranceBtn'; b.textContent='СТРАХОВКА ½'; b.onclick=insuranceBlackjack; row.appendChild(b);
+    }
+    if(!$('#noInsuranceBtn')){
+        const b=document.createElement('button'); b.className='btn btn-light'; b.id='noInsuranceBtn'; b.textContent='БЕЗ СТРАХОВКИ'; b.onclick=declineInsuranceBlackjack; row.appendChild(b);
+    }
+    if(!$('#bjResult')){
+        const r=document.createElement('div'); r.id='bjResult'; r.className='bj-result'; row.parentNode.insertBefore(r,row.nextSibling);
+    }
 }
 
+function bjRules(mode){
+    return {
+        classic:{double:true,surrender:true,five:false,bonus:0,label:"6 колод · дилер стоит на soft 17 · blackjack 3:2 · split · insurance 2:1"},
+        turbo:{double:true,surrender:true,five:false,bonus:0,label:"быстрый режим · blackjack 3:2 · дилер стоит на soft 17"},
+        five:{double:true,surrender:true,five:true,bonus:1.5,label:"5 карт без перебора = бонус 2.5× ставки"}
+    }[mode] || {double:true,surrender:true,five:false,bonus:0,label:"blackjack 3:2 · дилер стоит на soft 17"};
+}
+function bjModeLabel(mode){return ({classic:"Классика",turbo:"Турбо",five:"5 карт — бонус"}[mode]||"Классика");}
+function syncBjModeInfo(){const mode=$('#bjMode')?.value||'classic';if($('#bjModeInfo'))$('#bjModeInfo').textContent=bjRules(mode).label;}
+function createCard(){const data=ranks[randInt(0,ranks.length-1)];return {rank:data[0],value:data[1],suit:suits[randInt(0,suits.length-1)]};}
+function bjDeck(){const deck=[];for(let d=0;d<6;d++)for(const suit of suits)for(const [rank,value] of ranks)deck.push({rank,value,suit});for(let i=deck.length-1;i>0;i--){const j=randInt(0,i);[deck[i],deck[j]]=[deck[j],deck[i]];}return deck;}
+function handValue(hand){let value=0,aces=0;(hand||[]).forEach(c=>{value+=Number(c.value)||0;if(c.rank==='A')aces++;});while(value>21&&aces>0){value-=10;aces--;}return value;}
+function isSoftHand(hand){let raw=(hand||[]).reduce((s,c)=>s+(Number(c.value)||0),0);return (hand||[]).some(c=>c.rank==='A')&&raw!==handValue(hand);}
+function isNatural(hand){return Array.isArray(hand)&&hand.length===2&&handValue(hand)===21;}
+function sameSplitValue(a,b){return a&&b&&(a.rank===b.rank || Number(a.value)===Number(b.value));}
+function createCardElement(card,hidden=false){const el=document.createElement('div');el.className='card deal';if(hidden){el.classList.add('back');el.textContent='';return el;}if(card.suit==='♥'||card.suit==='♦')el.classList.add('red');el.innerHTML='<div>'+card.rank+'</div><div style="font-size:27px;align-self:center">'+card.suit+'</div>';return el;}
+function bjCurrentHand(){return bj.hands[bj.activeHand];}
+function bjAllHandsDone(){return bj.hands.length>0&&bj.hands.every(h=>h.done);}
+
+function renderBlackjack(animated=true){
+    bjEnsureExtraControls();
+    const dealer=$('#dealerHand'),player=$('#playerHand'); if(!dealer||!player)return;
+    dealer.innerHTML=''; player.innerHTML='';
+    bj.dealer.forEach((card,index)=>{const el=createCardElement(card,bj.hidden&&index===1);if(animated)el.style.animationDelay=(index*.10)+'s';dealer.appendChild(el);});
+    bj.hands.forEach((h,hi)=>{
+        const wrap=document.createElement('div');wrap.className='bj-hand-wrap'+(hi===bj.activeHand&&bj.active&&!h.done?' active':'');
+        const title=document.createElement('div');title.className='bj-hand-label';title.innerHTML='РУКА '+(hi+1)+' · <b>'+handValue(h.cards)+'</b>'+(h.doubled?' · 2×':'')+(h.done?' · ГОТОВО':'');wrap.appendChild(title);
+        const hand=document.createElement('div');hand.className='hand';
+        h.cards.forEach((card,index)=>{const el=createCardElement(card);if(animated)el.style.animationDelay=(.08+index*.10)+'s';hand.appendChild(el);});wrap.appendChild(hand);player.appendChild(wrap);
+    });
+    const h=bjCurrentHand();
+    $('#playerScore').textContent=h?handValue(h.cards):0;$('#dealerScore').textContent=bj.hidden?'?':handValue(bj.dealer);
+    const active=!!(bj.active&&!bj.finished&&h&&!h.done&&!bj.insuranceOffered);
+    $('#hitBtn').disabled=!active;
+    $('#standBtn').disabled=!active;
+    $('#doubleBtn').disabled=!active||h.cards.length!==2||h.doubled||state.balance<h.bet;
+    $('#surrenderBtn').disabled=!active||h.cards.length!==2||h.doubled||!bjRules(bj.mode).surrender||h.split;
+    $('#splitBtn').disabled=!active||bj.hands.length>=2||h.cards.length!==2||!sameSplitValue(h.cards[0],h.cards[1])||state.balance<h.bet;
+    $('#insuranceBtn').disabled=!bj.insuranceOffered;
+    $('#noInsuranceBtn').disabled=!bj.insuranceOffered;
+}
+
+function bjResult(text,type=''){const el=$('#bjResult');if(el){el.textContent=text;el.className='bj-result '+type;}if(text)notice(text,type==='bad'?'bad':'');}
 
 function resetBlackjackState(){
     clearTimeout(window.__bjLocalRestartTimer);
-    bj = {
-        active:false,
-        finished:false,
-        bet:0,
-        player:[],
-        dealer:[],
-        hidden:true,
-        mode:"classic",
-        doubled:false,
-        deck:[]
-    };
-    if($("#hitBtn"))$("#hitBtn").disabled=true;
-    if($("#standBtn"))$("#standBtn").disabled=true;
-    if($("#doubleBtn"))$("#doubleBtn").disabled=true;
-    if($("#surrenderBtn"))$("#surrenderBtn").disabled=true;
-    if($("#dealerHand"))$("#dealerHand").innerHTML="";
-    if($("#playerHand"))$("#playerHand").innerHTML="";
-    if($("#dealerScore"))$("#dealerScore").textContent="0";
-    if($("#playerScore"))$("#playerScore").textContent="0";
-    try{ renderBlackjack(false); }catch(_){}
+    bj={active:false,finished:false,bet:0,dealer:[],hidden:true,mode:'classic',deck:[],hands:[],activeHand:0,insurance:0,insuranceOffered:false,insuranceResolved:false,surrendered:false};
+    ['hitBtn','standBtn','doubleBtn','surrenderBtn','splitBtn','insuranceBtn','noInsuranceBtn'].forEach(id=>{if($('#'+id))$('#'+id).disabled=true;});
+    if($('#dealerHand'))$('#dealerHand').innerHTML='';if($('#playerHand'))$('#playerHand').innerHTML='';if($('#dealerScore'))$('#dealerScore').textContent='0';if($('#playerScore'))$('#playerScore').textContent='0';if($('#bjResult'))$('#bjResult').textContent='';
+}
+
+function settleInitialBlackjack(){
+    const playerNatural=isNatural(bj.hands[0].cards),dealerNatural=isNatural(bj.dealer);
+    bj.hidden=false;renderBlackjack(true);
+    let payout=0;
+    if(playerNatural&&dealerNatural)payout=bj.bet;
+    else if(playerNatural)payout=Math.floor(bj.bet*2.5);
+    else if(dealerNatural)payout=0;
+    if(bj.insurance>0&&dealerNatural){const insurancePayout=bj.insurance*3;addBalance(insurancePayout);}
+    if(payout){addBalance(payout);if(payout>bj.bet){registerWin(payout);showWin(payout,playerNatural?'BLACKJACK +'+money(payout):'+'+money(payout));}else bjResult('Равенство — ставка возвращена');}
+    else if(dealerNatural)bjResult(playerNatural?'Оба blackjack — возврат ставки':'Дилер: blackjack','bad');
+    track('blackjack',{win:payout>bj.bet,amount:payout,mode:bj.mode,blackjack:playerNatural,double:false,insurance:bj.insurance});
+    endBlackjack();
 }
 
 function startBlackjack(){
-    // A completed/stale round must NEVER block a new round.
-    if(bj.active){
-        if(bj.finished || (bj.player.length===0 && bj.dealer.length===0)){
-            resetBlackjackState();
-        }else{
-            // If the old round has no actionable state anymore, recover automatically.
-            const hasButtons = $("#hitBtn") && !$("#hitBtn").disabled;
-            const hasCards = (bj.player||[]).length>0 || (bj.dealer||[]).length>0;
-            if(!hasButtons && hasCards){
-                resetBlackjackState();
-            }else{
-                return notice("Сначала закончи текущую игру","bad");
-            }
-        }
-    }
+    bjEnsureExtraControls();
+    if(bj.active){if(bj.finished)resetBlackjackState();else return notice('Сначала закончи текущую игру','bad');}
+    const bet=Math.floor(Number($('#bjBet').value));if(!Number.isFinite(bet)||bet<=0)return notice('Укажи корректную ставку','bad');if(!spend(bet))return;
+    const mode=$('#bjMode')?.value||'classic',deck=bjDeck();
+    bj={active:true,finished:false,bet,dealer:[deck.pop(),deck.pop()],hidden:true,mode,deck,hands:[{cards:[deck.pop(),deck.pop()],bet,doubled:false,done:false,surrender:false,split:false}],activeHand:0,insurance:0,insuranceOffered:false,insuranceResolved:false,surrendered:false};
+    registerGame();renderBlackjack(true);
+    const dealerAce=bj.dealer[0]?.rank==='A';
+    if(dealerAce){bj.insuranceOffered=true;renderBlackjack(true);bjResult('Дилер показывает туз — можно взять страховку ½ ставки или продолжить без неё');return;}
+    if(bj.dealer[0]?.value===10 && isNatural(bj.dealer))setTimeout(settleInitialBlackjack,350);
+    else if(isNatural(bj.hands[0].cards)||isNatural(bj.dealer))setTimeout(settleInitialBlackjack,500);
+}
 
-    const bet=Math.floor(Number($("#bjBet").value));
-    if(!Number.isFinite(bet)||bet<=0)return notice("Укажи корректную ставку","bad");
-    if(!spend(bet))return;
+function declineInsuranceBlackjack(){
+    if(!bj.active||!bj.insuranceOffered)return;
+    bj.insuranceOffered=false;bj.insuranceResolved=true;
+    if(isNatural(bj.dealer)||isNatural(bj.hands[0].cards)){settleInitialBlackjack();return;}
+    renderBlackjack(true);bjResult('Без страховки · игра продолжается');
+}
 
-    const mode="classic";
-    const deck=bjDeck();
-    bj={
-        active:true,
-        finished:false,
-        bet,
-        player:[deck.pop(),deck.pop()],
-        dealer:[deck.pop(),deck.pop()],
-        hidden:true,
-        mode,
-        doubled:false,
-        deck
-    };
-
-    registerGame();
-    renderBlackjack(true);
-
-    // Natural blackjack: immediate settlement.
-    if(handValue(bj.player)===21){
-        setTimeout(()=>{
-            if(!bj.active || bj.finished)return;
-            bj.hidden=false;
-            renderBlackjack(true);
-            const dealerBJ=handValue(bj.dealer)===21;
-            const payout=dealerBJ ? bj.bet : Math.floor(bj.bet*2.5);
-            if(payout>0){
-                addBalance(payout);
-                if(payout>bj.bet)registerWin(payout);
-            }
-            track("blackjack",{win:payout>bj.bet,amount:payout,mode:"classic",blackjack:true});
-            if(dealerBJ)notice("У обоих blackjack — возврат ставки");
-            else showWin(payout,"BLACKJACK +"+money(payout));
-            endBlackjack();
-        },650);
-    }
+function insuranceBlackjack(){
+    if(!bj.active||!bj.insuranceOffered)return;
+    const cost=Math.floor(bj.bet/2);if(!spend(cost))return;
+    bj.insurance=cost;bj.insuranceOffered=false;bj.insuranceResolved=true;renderBlackjack(true);
+    if(isNatural(bj.dealer)){settleInitialBlackjack();return;}
+    if(isNatural(bj.hands[0].cards)){settleInitialBlackjack();return;}
+    bjResult('Страховка принята · игра продолжается');
 }
 
 function hitBlackjack(){
-    if(!bj.active||bj.finished)return;
-    const card=bj.deck.pop();if(!card)return;
-    bj.player.push(card);renderBlackjack(true);tone(500,.05);
-    const value=handValue(bj.player);
-    const rules=bjRules(bj.mode);
-    if(value>21){
-        setTimeout(()=>{notice("Перебор","bad");track("blackjack",{win:false,amount:0,mode:bj.mode});endBlackjack();},350);
-    }else if(value===21){setTimeout(standBlackjack,300);
-    }else if(rules.five&&bj.player.length>=5){
-        const payout=Math.floor(bj.bet*2.5);bj.hidden=false;renderBlackjack(true);addBalance(payout);registerWin(payout);showWin(payout,"5 КАРТ +"+money(payout));track("blackjack",{win:true,amount:payout,mode:bj.mode,fiveCard:true});endBlackjack();
-    }
+    if(!bj.active||bj.finished||bj.insuranceOffered)return;const h=bjCurrentHand();if(!h||h.done)return;const card=bj.deck.pop();if(!card)return;h.cards.push(card);renderBlackjack(true);tone(500,.05);
+    const value=handValue(h.cards),rules=bjRules(bj.mode);
+    if(value>21){h.done=true;bjResult('Перебор — рука проиграна','bad');nextBlackjackHand();}
+    else if(value===21){h.done=true;nextBlackjackHand();}
+    else if(rules.five&&h.cards.length>=5){h.done=true;const payout=Math.floor(h.bet*2.5);addBalance(payout);registerWin(payout);showWin(payout,'5 КАРТ +'+money(payout));track('blackjack',{win:true,amount:payout,mode:bj.mode,fiveCard:true});nextBlackjackHand();}
 }
 
 function doubleBlackjack(){
-    if(!bj.active||bj.player.length!==2||bj.doubled||!bjRules(bj.mode).double)return;
-    if(!spend(bj.bet))return;
-    bj.bet*=2;bj.doubled=true;
-    const card=bj.deck.pop();if(card)bj.player.push(card);
-    renderBlackjack(true);tone(600,.06);
-    if(handValue(bj.player)>21){setTimeout(()=>{notice("Перебор после удвоения","bad");track("blackjack",{win:false,amount:0,mode:bj.mode,double:true});endBlackjack();},350);}
-    else setTimeout(standBlackjack,300);
+    if(!bj.active||bj.finished||bj.insuranceOffered)return;const h=bjCurrentHand();if(!h||h.cards.length!==2||h.doubled)return;if(!spend(h.bet))return;h.bet*=2;h.doubled=true;const card=bj.deck.pop();if(card)h.cards.push(card);renderBlackjack(true);tone(600,.06);h.done=true;if(handValue(h.cards)>21)bjResult('Перебор после удвоения','bad');nextBlackjackHand();
+}
+
+function splitBlackjack(){
+    if(!bj.active||bj.finished||bj.insuranceOffered||bj.hands.length>=2)return;const h=bjCurrentHand();if(!h||h.cards.length!==2||!sameSplitValue(h.cards[0],h.cards[1]))return;if(!spend(h.bet))return;
+    const a=h.cards[0],b=h.cards[1];h.cards=[a,b];const h1={cards:[a,bj.deck.pop()],bet:h.bet,doubled:false,done:false,surrender:false,split:true};const h2={cards:[b,bj.deck.pop()],bet:h.bet,doubled:false,done:false,surrender:false,split:true};bj.hands=[h1,h2];bj.activeHand=0;renderBlackjack(true);tone(720,.05);
+    if(h1.cards[0].rank==='A'){h1.done=true;h2.done=true;nextBlackjackHand();return;}
 }
 
 function surrenderBlackjack(){
-    if(!bj.active||bj.player.length!==2||bj.doubled||!bjRules(bj.mode).surrender)return;
-    bj.hidden=false;renderBlackjack(true);
-    const refund=Math.floor(bj.bet/2);addBalance(refund);
-    notice("Сдача: возвращено "+money(refund));track("blackjack",{win:false,amount:refund,mode:bj.mode,surrender:true});endBlackjack();
+    if(!bj.active||bj.finished||bj.insuranceOffered)return;const h=bjCurrentHand();if(!h||h.cards.length!==2||h.doubled||h.split)return;h.done=true;h.surrender=true;const refund=Math.floor(h.bet/2);addBalance(refund);bjResult('Сдача: возвращено '+money(refund));nextBlackjackHand();
 }
 
-function standBlackjack(){
+function standBlackjack(){if(!bj.active||bj.finished||bj.insuranceOffered)return;const h=bjCurrentHand();if(!h)return;h.done=true;nextBlackjackHand();}
+function nextBlackjackHand(){
     if(!bj.active||bj.finished)return;
-    bj.hidden=false;renderBlackjack(true);setTimeout(dealerPlay,400);
+    const next=bj.hands.findIndex(h=>!h.done);if(next>=0){bj.activeHand=next;renderBlackjack(true);return;}
+    bj.hidden=false;renderBlackjack(true);setTimeout(dealerPlay,350);
 }
-
 function dealerPlay(){
     if(!bj.active||bj.finished)return;
-    const step=()=>{
-        if(handValue(bj.dealer)<17 || (handValue(bj.dealer)===17&&isSoftHand(bj.dealer))){
-            const card=bj.deck.pop();if(card)bj.dealer.push(card);renderBlackjack(true);tone(350,.05);setTimeout(step,350);
-        }else finishBlackjack();
-    };step();
+    const step=()=>{const value=handValue(bj.dealer);if(value<17){const card=bj.deck.pop();if(card)bj.dealer.push(card);renderBlackjack(true);tone(350,.05);setTimeout(step,350);}else finishBlackjack();};step();
 }
-
 function finishBlackjack(){
-    if(!bj.active||bj.finished)return;
-    bj.finished=true;bj.hidden=false;renderBlackjack(true);
-    const player=handValue(bj.player),dealer=handValue(bj.dealer);let payout=0;
-    if(dealer>21||player>dealer)payout=bj.bet*2;
-    else if(player===dealer)payout=bj.bet;
-    if(payout>0){addBalance(payout);if(payout>bj.bet){registerWin(payout);showWin(payout,"+"+money(payout));}else notice("Возврат ставки");}
-    else notice("Дилер победил","bad");
-    track("blackjack",{win:payout>bj.bet,amount:payout,mode:bj.mode,double:bj.doubled});endBlackjack();
+    if(!bj.active||bj.finished)return;bj.finished=true;bj.hidden=false;renderBlackjack(true);const dealer=handValue(bj.dealer);let totalWin=0;
+    bj.hands.forEach(h=>{
+        const player=handValue(h.cards);let payout=0;
+        if(h.surrender)payout=Math.floor(h.bet/2);
+        else if(player>21)payout=0;
+        else if(dealer>21||player>dealer)payout=h.bet*2;
+        else if(player===dealer)payout=h.bet;
+        if(payout){addBalance(payout);if(payout>h.bet){totalWin+=payout;registerWin(payout);}}
+    });
+    if(totalWin>0)showWin(totalWin,'BLACKJACK +'+money(totalWin));else if(bj.hands.some(h=>h.surrender))bjResult('Раунд завершён');else if(dealer>21)bjResult('Дилер перебрал');else bjResult('Дилер победил','bad');
+    track('blackjack',{win:totalWin>0,amount:totalWin,mode:bj.mode,double:bj.hands.some(h=>h.doubled),split:bj.hands.length>1,insurance:bj.insurance});endBlackjack();
 }
+function endBlackjack(){bj.active=false;bj.finished=true;['hitBtn','standBtn','doubleBtn','surrenderBtn','splitBtn','insuranceBtn','noInsuranceBtn'].forEach(id=>{if($('#'+id))$('#'+id).disabled=true;});saveState();clearTimeout(window.__bjLocalRestartTimer);window.__bjLocalRestartTimer=setTimeout(()=>resetBlackjackState(),1200);}
 
-function endBlackjack(){
-    // Logical round ends NOW. This is the important part:
-    // a new click must never see bj.active=true after the result is settled.
-    bj.active=false;
-    bj.finished=true;
-
-    $("#hitBtn").disabled=true;
-    $("#standBtn").disabled=true;
-    $("#doubleBtn").disabled=true;
-    $("#surrenderBtn").disabled=true;
-
-    saveState();
-
-    clearTimeout(window.__bjLocalRestartTimer);
-    window.__bjLocalRestartTimer=setTimeout(()=>{
-        resetBlackjackState();
-    },700);
-}
-
-if($("#bjMode"))$("#bjMode").addEventListener("change",syncBjModeInfo);
-syncBjModeInfo();
+if($('#bjMode'))$('#bjMode').addEventListener('change',syncBjModeInfo);syncBjModeInfo();bjEnsureExtraControls();
 
 /* ---------------- ONLINE V2 ---------------- */
 let bjOnline={roomId:null,role:null,ref:null,bet:0,mode:"classic",busy:false,settled:false,queueId:null,restartTimer:null};
